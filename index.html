@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>map-viewer</title> <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; }
+        #map { height: 100%; width: 100%; z-index: 1; }
+        
+        /* コンパクトな操作パネル */
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 260px; /* 幅を固定してコンパクトに */
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        /* パネル最小化ボタン */
+        #toggle-panel {
+            float: right;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        h1 { font-size: 14px; margin: 0 0 5px 0; color: #333; display: inline-block; }
+
+        /* 入力要素のデザイン調整 */
+        input[type="file"] {
+            font-size: 11px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        label { font-size: 11px; display: block; margin-top: 5px; color: #555; }
+        input[type="range"] { width: 100%; margin: 2px 0 8px 0; }
+        
+        /* 詳細設定（手動入力） */
+        details { 
+            margin-top: 5px; 
+            border-top: 1px solid #eee; 
+            padding-top: 5px;
+        }
+        summary { font-size: 11px; cursor: pointer; color: #007bff; outline: none; }
+        .coord-row { display: flex; gap: 5px; margin-top: 3px; }
+        input[type="number"] { 
+            flex: 1; 
+            font-size: 11px; 
+            padding: 3px; 
+            border: 1px solid #ccc; 
+            border-radius: 3px; 
+        }
+        button.redraw-btn {
+            width: 100%;
+            font-size: 12px;
+            padding: 5px;
+            margin-top: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* GPSボタン（右下に配置） */
+        #gps-btn {
+            position: absolute;
+            bottom: 25px;
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #gps-btn.active { color: white; background: #007bff; }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <button id="toggle-panel" onclick="toggleControls()">−</button>
+        <h1>林小班図</h1>
+        
+        <div id="panel-content">
+            <input type="file" id="imageInput" accept="image/*">
+            
+            <label>透明度: <span id="opacityVal">0.5</span></label>
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="0.5">
+
+            <details>
+                <summary>座標手動修正</summary>
+                <label>左下 (南西)</label>
+                <div class="coord-row">
+                    <input type="number" id="swLat" placeholder="緯度" step="0.000001">
+                    <input type="number" id="swLng" placeholder="経度" step="0.000001">
+                </div>
+                <label>右上 (北東)</label>
+                <div class="coord-row">
+                    <input type="number" id="neLat" placeholder="緯度" step="0.000001">
+                    <input type="number" id="neLng" placeholder="経度" step="0.000001">
+                </div>
+                <button class="redraw-btn" onclick="applyOverlay()">再描画</button>
+            </details>
+        </div>
+    </div>
+
+    <div id="gps-btn" onclick="toggleGPS()">📍</div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- 1. PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('SW Registered'))
+                .catch(err => console.log('SW Failed', err));
+        }
+
+        // --- 2. Map Initialization ---
+        const map = L.map('map', { zoomControl: false }).setView([36.064, 136.220], 14);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+            attribution: "地理院タイル",
+            maxZoom: 18
+        }).addTo(map);
+
+        // --- 3. Overlay Logic ---
+        let currentOverlay = null;
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // ファイル名解析 (例: map_36.1_136.1_36.2_136.2.jpg)
+            const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
+            const coords = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
+
+            if (coords.length >= 4) {
+                document.getElementById('swLat').value = coords[0];
+                document.getElementById('swLng').value = coords[1];
+                document.getElementById('neLat').value = coords[2];
+                document.getElementById('neLng').value = coords[3];
+                applyOverlay();
+            } else {
+                alert("ファイル名から座標を取得できませんでした。手入力してください。");
+            }
+        });
+
+        function applyOverlay() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) return;
+
+            const swLat = parseFloat(document.getElementById('swLat').value);
+            const swLng = parseFloat(document.getElementById('swLng').value);
+            const neLat = parseFloat(document.getElementById('neLat').value);
+            const neLng = parseFloat(document.getElementById('neLng').value);
+            const opacity = document.getElementById('opacitySlider').value;
+
+            if (isNaN(swLat) || isNaN(neLng)) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const bounds = [[swLat, swLng], [neLat, neLng]];
+                if (currentOverlay) map.removeLayer(currentOverlay);
+                
+                currentOverlay = L.imageOverlay(e.target.result, bounds, { opacity: opacity }).addTo(map);
+                map.fitBounds(bounds);
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        document.getElementById('opacitySlider').addEventListener('input', (e) => {
+            document.getElementById('opacityVal').innerText = e.target.value;
+            if (currentOverlay) currentOverlay.setOpacity(e.target.value);
+        });
+
+        // --- 4. GPS Logic ---
+        let gpsMarker = null;
+        let gpsWatchId = null;
+
+        function toggleGPS() {
+            const btn = document.getElementById('gps-btn');
+            if (gpsWatchId) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+                btn.classList.remove('active');
+                if (gpsMarker) map.removeLayer(gpsMarker);
+            } else {
+                btn.classList.add('active');
+                gpsWatchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        if (!gpsMarker) {
+                            gpsMarker = L.circleMarker([lat, lng], {
+                                color: 'white', weight: 2, fillColor: '#007bff', fillOpacity: 1, radius: 6
+                            }).addTo(map);
+                        } else {
+                            gpsMarker.setLatLng([lat, lng]);
+                        }
+                    },
+                    (err) => alert("GPS Error: " + err.message),
+                    { enableHighAccuracy: true }
+                );
+            }
+        }
+
+        // --- 5. UI Controls (Minimize) ---
+        function toggleControls() {
+            const content = document.getElementById('panel-content');
+            const btn = document.getElementById('toggle-panel');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                btn.innerText = '−';
+            } else {
+                content.style.display = 'none';
+                btn.innerText = '＋';
+            }
+        }
+    </script>
+</body>
+</html>
