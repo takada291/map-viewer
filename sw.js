@@ -1,4 +1,4 @@
-const CACHE_NAME = 'map-viewer-v1';
+const CACHE_NAME = 'map-viewer-v1.0.0';
 const ASSETS = [
   './',
   './index.html',
@@ -50,4 +50,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+
 });
