@@ -8,14 +8,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <link rel="manifest" href="manifest.json">
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; }
         #map { height: 100%; width: 100%; z-index: 1; }
         
-        /* コンパクトな操作パネル */
         #controls {
             position: absolute;
             top: 10px;
@@ -54,20 +52,10 @@
         label { font-size: 11px; display: block; margin-top: 5px; color: #555; }
         input[type="range"] { width: 100%; margin: 2px 0 8px 0; }
         
-        details { 
-            margin-top: 5px; 
-            border-top: 1px solid #eee; 
-            padding-top: 5px;
-        }
+        details { margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; }
         summary { font-size: 11px; cursor: pointer; color: #007bff; outline: none; }
         .coord-row { display: flex; gap: 5px; margin-top: 3px; }
-        input[type="number"] { 
-            flex: 1; 
-            font-size: 11px; 
-            padding: 3px; 
-            border: 1px solid #ccc; 
-            border-radius: 3px; 
-        }
+        input[type="number"] { flex: 1; font-size: 11px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; }
         button.redraw-btn {
             width: 100%;
             font-size: 12px;
@@ -80,7 +68,6 @@
             cursor: pointer;
         }
 
-        /* GPSボタン */
         #gps-btn {
             position: absolute;
             bottom: 25px;
@@ -99,17 +86,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         #gps-btn.active { color: white; background: #007bff; }
-
-        /* --- GPSピンのアニメーション定義 --- */
-        @keyframes pulse-red {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .gps-animation {
-            /* アニメーションのみ定義し、見た目はJSでインライン記述する */
-            animation: pulse-red 1.5s infinite;
-        }
     </style>
 </head>
 <body>
@@ -120,10 +96,8 @@
         
         <div id="panel-content">
             <input type="file" id="imageInput" accept="image/*">
-            
             <label>透明度: <span id="opacityVal">0.5</span></label>
             <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="0.5">
-
             <details>
                 <summary>座標手動修正</summary>
                 <label>左下 (南西)</label>
@@ -142,19 +116,18 @@
     </div>
 
     <div id="gps-btn" onclick="toggleGPS()">📍</div>
-
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- 1. PWA Service Worker Registration ---
+        // --- 1. SW ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
                 .then(() => console.log('SW Registered'))
                 .catch(err => console.log('SW Failed', err));
         }
 
-        // --- 2. Map Initialization ---
+        // --- 2. Map ---
         const map = L.map('map', { zoomControl: false }).setView([36.064, 136.220], 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -163,13 +136,12 @@
             maxZoom: 18
         }).addTo(map);
 
-        // --- 3. Overlay Logic ---
+        // --- 3. Overlay ---
         let currentOverlay = null;
 
         document.getElementById('imageInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
             const coords = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
 
@@ -187,20 +159,17 @@
         function applyOverlay() {
             const fileInput = document.getElementById('imageInput');
             if (!fileInput.files[0]) return;
-
             const swLat = parseFloat(document.getElementById('swLat').value);
             const swLng = parseFloat(document.getElementById('swLng').value);
             const neLat = parseFloat(document.getElementById('neLat').value);
             const neLng = parseFloat(document.getElementById('neLng').value);
             const opacity = document.getElementById('opacitySlider').value;
-
             if (isNaN(swLat) || isNaN(neLng)) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const bounds = [[swLat, swLng], [neLat, neLng]];
                 if (currentOverlay) map.removeLayer(currentOverlay);
-                
                 currentOverlay = L.imageOverlay(e.target.result, bounds, { opacity: opacity }).addTo(map);
                 map.fitBounds(bounds);
             };
@@ -212,45 +181,59 @@
             if (currentOverlay) currentOverlay.setOpacity(e.target.value);
         });
 
-        // --- 4. GPS Logic (修正版) ---
+        // --- 4. GPS Logic (確実版) ---
         let gpsMarker = null;
         let gpsWatchId = null;
 
         function toggleGPS() {
             const btn = document.getElementById('gps-btn');
+            
             if (gpsWatchId) {
+                // 停止処理
                 navigator.geolocation.clearWatch(gpsWatchId);
                 gpsWatchId = null;
                 btn.classList.remove('active');
                 if (gpsMarker) map.removeLayer(gpsMarker);
+                gpsMarker = null; // リセット
             } else {
+                // 開始処理
                 btn.classList.add('active');
+                
+                // 履歴削除などで許可がリセットされている場合の対策
+                // ボタンを押した直後に位置情報の許可ダイアログが出ることがあります
+                
                 gpsWatchId = navigator.geolocation.watchPosition(
                     (pos) => {
                         const lat = pos.coords.latitude;
                         const lng = pos.coords.longitude;
                         
                         if (!gpsMarker) {
-                            // ★ここを修正：スタイルをHTML内に直接記述して表示を確実に！
-                            const pulseIcon = L.divIcon({
-                                className: 'gps-animation', // CSSクラスはアニメーションのみ担当
-                                iconSize: [24, 24],     // サイズ指定
-                                iconAnchor: [12, 12],   // 中心点
-                                // HTMLで直接赤い丸を描く（これでCSS読み込み遅れがあっても表示される）
-                                html: '<div style="width:100%; height:100%; background-color:red; border:3px solid white; border-radius:50%; box-shadow:0 0 8px rgba(0,0,0,0.5);"></div>'
-                            });
-                            gpsMarker = L.marker([lat, lng], { icon: pulseIcon }).addTo(map);
+                            // 初回受信時にアラートを出して知らせる（デバッグ用）
+                            alert("【受信成功】GPS信号をキャッチしました！\n現在地に赤い丸を表示します。");
+                            
+                            // 以前成功していた L.circleMarker に戻し、色を赤、サイズを大きく変更
+                            gpsMarker = L.circleMarker([lat, lng], {
+                                color: 'white',   // 外枠の色
+                                weight: 4,        // 外枠の太さ（太くして見やすく）
+                                fillColor: 'red', // 中身の色（赤！）
+                                fillOpacity: 1,   // 透明度（くっきり）
+                                radius: 12        // 半径（以前の倍の大きさ）
+                            }).addTo(map);
                         } else {
                             gpsMarker.setLatLng([lat, lng]);
                         }
                     },
-                    (err) => alert("GPS Error: " + err.message),
+                    (err) => {
+                        // エラー時の通知
+                        alert("GPSエラー: " + err.message + "\n※位置情報の利用を許可してください");
+                        btn.classList.remove('active');
+                    },
                     { enableHighAccuracy: true }
                 );
             }
         }
 
-        // --- 5. UI Controls ---
+        // --- 5. Controls ---
         function toggleControls() {
             const content = document.getElementById('panel-content');
             const btn = document.getElementById('toggle-panel');
