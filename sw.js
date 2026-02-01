@@ -1,4 +1,4 @@
-const CACHE_NAME = 'map-viewer-v1.0.1';
+const CACHE_NAME = 'map-viewer-v1.0.2'; /* バージョンを更新しました */
 const ASSETS = [
   './',
   './index.html',
@@ -50,6 +50,4 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-
 });
-
