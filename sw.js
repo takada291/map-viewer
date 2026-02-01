@@ -1,4 +1,4 @@
-const CACHE_NAME = 'map-viewer-v1.0.3'; /* バージョンを更新しました */
+const CACHE_NAME = 'map-viewer-v1.0.4'; /* バージョンを更新 */
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,6 @@ const ASSETS = [
   './icon.png'
 ];
 
-// インストール時にコアファイルをキャッシュ
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,7 +14,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// リクエスト処理（キャッシュ優先、なければネットワーク）
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
@@ -31,7 +29,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// 古いキャッシュの削除
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
