@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>map-viewer</title>
+    <title>林小班図</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -19,29 +19,33 @@
             top: 10px;
             left: 10px;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 8px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            width: 260px;
-            max-height: 80vh;
-            overflow-y: auto;
+            width: 270px;
+            max-height: 85vh;
+            overflow-y: auto; /* コンテンツが増えたのでスクロール可能に */
             transition: all 0.3s;
         }
 
         #toggle-panel {
             float: right;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #555;
             background: none;
             border: none;
-            padding: 0;
+            padding: 0 5px;
             margin: 0;
         }
 
-        h1 { font-size: 14px; margin: 0 0 5px 0; color: #333; display: inline-block; }
+        h1 { font-size: 14px; margin: 0 0 10px 0; color: #333; display: inline-block; }
+        h3 { font-size: 12px; margin: 0 0 5px 0; color: #007bff; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+
+        .layer-group { margin-bottom: 15px; }
+        .layer-group:last-child { margin-bottom: 5px; }
 
         input[type="file"] {
             font-size: 11px;
@@ -49,24 +53,30 @@
             margin-bottom: 5px;
         }
         
-        label { font-size: 11px; display: block; margin-top: 5px; color: #555; }
-        input[type="range"] { width: 100%; margin: 2px 0 8px 0; }
+        label { font-size: 11px; display: block; margin-top: 2px; color: #555; }
+        input[type="range"] { width: 100%; margin: 2px 0 5px 0; }
         
-        details { margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; }
-        summary { font-size: 11px; cursor: pointer; color: #007bff; outline: none; }
+        details { margin-top: 2px; border: 1px solid #eee; border-radius: 4px; padding: 2px; }
+        summary { font-size: 11px; cursor: pointer; color: #555; outline: none; list-style: none; font-weight: bold; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: " ▶ 手動補正"; font-size: 10px; }
+        details[open] summary::after { content: " ▼ 閉じる"; }
+
         .coord-row { display: flex; gap: 5px; margin-top: 3px; }
         input[type="number"] { flex: 1; font-size: 11px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; }
+        
         button.redraw-btn {
             width: 100%;
-            font-size: 12px;
-            padding: 5px;
-            margin-top: 5px;
+            font-size: 11px;
+            padding: 4px;
+            margin-top: 4px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+        button.redraw-btn:hover { background: #0056b3; }
 
         #gps-btn {
             position: absolute;
@@ -92,26 +102,48 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図v1.1</h1>
+        <h1>林小班図 v2.0</h1>
         
         <div id="panel-content">
-            <input type="file" id="imageInput" accept="image/*">
-            <label>透明度: <span id="opacityVal">0.5</span></label>
-            <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="0.5">
-            <details>
-                <summary>座標手動修正</summary>
-                <label>左下 (南西)</label>
-                <div class="coord-row">
-                    <input type="number" id="swLat" placeholder="緯度" step="0.000001">
-                    <input type="number" id="swLng" placeholder="経度" step="0.000001">
-                </div>
-                <label>右上 (北東)</label>
-                <div class="coord-row">
-                    <input type="number" id="neLat" placeholder="緯度" step="0.000001">
-                    <input type="number" id="neLng" placeholder="経度" step="0.000001">
-                </div>
-                <button class="redraw-btn" onclick="applyOverlay()">再描画</button>
-            </details>
+            <div class="layer-group">
+                <h3>レイヤー1 (奥/下)</h3>
+                <input type="file" id="file1" accept="image/*" onchange="handleFileSelect(1)">
+                <label>透明度: <span id="opVal1">0.5</span></label>
+                <input type="range" id="range1" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(1)">
+                
+                <details>
+                    <summary></summary>
+                    <label>左下 (南西)</label>
+                    <div class="coord-row">
+                        <input type="number" id="swLat1" step="0.000001"><input type="number" id="swLng1" step="0.000001">
+                    </div>
+                    <label>右上 (北東)</label>
+                    <div class="coord-row">
+                        <input type="number" id="neLat1" step="0.000001"><input type="number" id="neLng1" step="0.000001">
+                    </div>
+                    <button class="redraw-btn" onclick="manualRedraw(1)">再描画</button>
+                </details>
+            </div>
+
+            <div class="layer-group">
+                <h3>レイヤー2 (手前/上)</h3>
+                <input type="file" id="file2" accept="image/*" onchange="handleFileSelect(2)">
+                <label>透明度: <span id="opVal2">0.5</span></label>
+                <input type="range" id="range2" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(2)">
+                
+                <details>
+                    <summary></summary>
+                    <label>左下 (南西)</label>
+                    <div class="coord-row">
+                        <input type="number" id="swLat2" step="0.000001"><input type="number" id="swLng2" step="0.000001">
+                    </div>
+                    <label>右上 (北東)</label>
+                    <div class="coord-row">
+                        <input type="number" id="neLat2" step="0.000001"><input type="number" id="neLng2" step="0.000001">
+                    </div>
+                    <button class="redraw-btn" onclick="manualRedraw(2)">再描画</button>
+                </details>
+            </div>
         </div>
     </div>
 
@@ -120,14 +152,14 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- 1. SW ---
+        // --- 1. Service Worker ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
                 .then(() => console.log('SW Registered'))
                 .catch(err => console.log('SW Failed', err));
         }
 
-        // --- 2. Map ---
+        // --- 2. Map Setup ---
         const map = L.map('map', { zoomControl: false }).setView([36.064, 136.220], 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -136,52 +168,85 @@
             maxZoom: 18
         }).addTo(map);
 
-        // --- 3. Overlay ---
-        let currentOverlay = null;
+        // --- 3. Dual Layer Logic ---
+        // レイヤー管理用のオブジェクト
+        const layers = {
+            1: { overlay: null, opacity: 0.5 },
+            2: { overlay: null, opacity: 0.5 }
+        };
 
-        document.getElementById('imageInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
+        function handleFileSelect(id) {
+            const fileInput = document.getElementById('file' + id);
+            const file = fileInput.files[0];
             if (!file) return;
+
+            // ファイル名解析 (例: map_36.00_136.00_36.01_136.01.jpg)
             const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
+            // 数値っぽくてドットを含むものを抽出
             const coords = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
 
             if (coords.length >= 4) {
-                document.getElementById('swLat').value = coords[0];
-                document.getElementById('swLng').value = coords[1];
-                document.getElementById('neLat').value = coords[2];
-                document.getElementById('neLng').value = coords[3];
-                applyOverlay();
+                // 座標入力欄にセット（南, 西, 北, 東 の順を想定）
+                document.getElementById('swLat' + id).value = coords[0];
+                document.getElementById('swLng' + id).value = coords[1];
+                document.getElementById('neLat' + id).value = coords[2];
+                document.getElementById('neLng' + id).value = coords[3];
+                
+                drawLayer(id, file);
             } else {
-                alert("ファイル名から座標を取得できませんでした。手入力してください。");
+                alert("ファイル名から座標を読み取れませんでした。\n手動補正欄に入力してください。");
             }
-        });
+        }
 
-        function applyOverlay() {
-            const fileInput = document.getElementById('imageInput');
-            if (!fileInput.files[0]) return;
-            const swLat = parseFloat(document.getElementById('swLat').value);
-            const swLng = parseFloat(document.getElementById('swLng').value);
-            const neLat = parseFloat(document.getElementById('neLat').value);
-            const neLng = parseFloat(document.getElementById('neLng').value);
-            const opacity = document.getElementById('opacitySlider').value;
+        function manualRedraw(id) {
+            const fileInput = document.getElementById('file' + id);
+            if (!fileInput.files[0]) {
+                alert("画像ファイルが選択されていません");
+                return;
+            }
+            drawLayer(id, fileInput.files[0]);
+        }
+
+        function drawLayer(id, file) {
+            const swLat = parseFloat(document.getElementById('swLat' + id).value);
+            const swLng = parseFloat(document.getElementById('swLng' + id).value);
+            const neLat = parseFloat(document.getElementById('neLat' + id).value);
+            const neLng = parseFloat(document.getElementById('neLng' + id).value);
+
             if (isNaN(swLat) || isNaN(neLng)) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const bounds = [[swLat, swLng], [neLat, neLng]];
-                if (currentOverlay) map.removeLayer(currentOverlay);
-                currentOverlay = L.imageOverlay(e.target.result, bounds, { opacity: opacity }).addTo(map);
+                const opacity = parseFloat(document.getElementById('range' + id).value);
+
+                // 既存のレイヤーがあれば削除
+                if (layers[id].overlay) {
+                    map.removeLayer(layers[id].overlay);
+                }
+
+                // 画像オーバーレイを追加
+                layers[id].overlay = L.imageOverlay(e.target.result, bounds, {
+                    opacity: opacity,
+                    zIndex: id * 100 // レイヤー2を手前に表示
+                }).addTo(map);
+
+                // レイヤー2を読み込んだときも、全体が見えるようにズームするかはお好みで
+                // ここでは「最後に読み込んだ方」にズームするようにします
                 map.fitBounds(bounds);
             };
-            reader.readAsDataURL(fileInput.files[0]);
+            reader.readAsDataURL(file);
         }
 
-        document.getElementById('opacitySlider').addEventListener('input', (e) => {
-            document.getElementById('opacityVal').innerText = e.target.value;
-            if (currentOverlay) currentOverlay.setOpacity(e.target.value);
-        });
+        function updateOpacity(id) {
+            const val = document.getElementById('range' + id).value;
+            document.getElementById('opVal' + id).innerText = val;
+            if (layers[id].overlay) {
+                layers[id].overlay.setOpacity(val);
+            }
+        }
 
-        // --- 4. GPS Logic (確実版) ---
+        // --- 4. GPS Logic (前回成功版を維持) ---
         let gpsMarker = null;
         let gpsWatchId = null;
 
@@ -189,18 +254,13 @@
             const btn = document.getElementById('gps-btn');
             
             if (gpsWatchId) {
-                // 停止処理
                 navigator.geolocation.clearWatch(gpsWatchId);
                 gpsWatchId = null;
                 btn.classList.remove('active');
                 if (gpsMarker) map.removeLayer(gpsMarker);
-                gpsMarker = null; // リセット
+                gpsMarker = null;
             } else {
-                // 開始処理
                 btn.classList.add('active');
-                
-                // 履歴削除などで許可がリセットされている場合の対策
-                // ボタンを押した直後に位置情報の許可ダイアログが出ることがあります
                 
                 gpsWatchId = navigator.geolocation.watchPosition(
                     (pos) => {
@@ -208,24 +268,20 @@
                         const lng = pos.coords.longitude;
                         
                         if (!gpsMarker) {
-                            // 初回受信時にアラートを出して知らせる（デバッグ用）
                             alert("【受信成功】GPS信号をキャッチしました！\n現在地に赤い丸を表示します。");
-                            
-                            // 以前成功していた L.circleMarker に戻し、色を赤、サイズを大きく変更
                             gpsMarker = L.circleMarker([lat, lng], {
-                                color: 'white',   // 外枠の色
-                                weight: 4,        // 外枠の太さ（太くして見やすく）
-                                fillColor: 'red', // 中身の色（赤！）
-                                fillOpacity: 1,   // 透明度（くっきり）
-                                radius: 12        // 半径（以前の倍の大きさ）
+                                color: 'white',
+                                weight: 4,
+                                fillColor: 'red',
+                                fillOpacity: 1,
+                                radius: 12
                             }).addTo(map);
                         } else {
                             gpsMarker.setLatLng([lat, lng]);
                         }
                     },
                     (err) => {
-                        // エラー時の通知
-                        alert("GPSエラー: " + err.message + "\n※位置情報の利用を許可してください");
+                        alert("GPSエラー: " + err.message);
                         btn.classList.remove('active');
                     },
                     { enableHighAccuracy: true }
@@ -233,7 +289,7 @@
             }
         }
 
-        // --- 5. Controls ---
+        // --- 5. Panel Toggle ---
         function toggleControls() {
             const content = document.getElementById('panel-content');
             const btn = document.getElementById('toggle-panel');
@@ -248,5 +304,3 @@
     </script>
 </body>
 </html>
-
-
