@@ -25,7 +25,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             width: 270px;
             max-height: 85vh;
-            overflow-y: auto; /* コンテンツが増えたのでスクロール可能に */
+            overflow-y: auto;
             transition: all 0.3s;
         }
 
@@ -102,7 +102,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v2.0</h1>
+        <h1>林小班図 v3.0</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -151,6 +151,8 @@
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
+    
     <script>
         // --- 1. Service Worker ---
         if ('serviceWorker' in navigator) {
@@ -169,7 +171,6 @@
         }).addTo(map);
 
         // --- 3. Dual Layer Logic ---
-        // レイヤー管理用のオブジェクト
         const layers = {
             1: { overlay: null, opacity: 0.5 },
             2: { overlay: null, opacity: 0.5 }
@@ -180,22 +181,55 @@
             const file = fileInput.files[0];
             if (!file) return;
 
-            // ファイル名解析 (例: map_36.00_136.00_36.01_136.01.jpg)
-            const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
-            // 数値っぽくてドットを含むものを抽出
-            const coords = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                let coordsFromExif = null;
+                let coordsFromFilename = null;
 
-            if (coords.length >= 4) {
-                // 座標入力欄にセット（南, 西, 北, 東 の順を想定）
-                document.getElementById('swLat' + id).value = coords[0];
-                document.getElementById('swLng' + id).value = coords[1];
-                document.getElementById('neLat' + id).value = coords[2];
-                document.getElementById('neLng' + id).value = coords[3];
-                
-                drawLayer(id, file);
-            } else {
-                alert("ファイル名から座標を読み取れませんでした。\n手動補正欄に入力してください。");
-            }
+                // ① まず、魔法のExifポケット（ImageDescription）から座標を探す
+                try {
+                    const exifObj = piexif.load(dataUrl);
+                    const desc = exifObj["0th"][piexif.ImageIFD.ImageDescription];
+                    if (desc) {
+                        const coordsStr = typeof desc === 'string' ? desc : desc.toString();
+                        const parts = coordsStr.split(',').map(parseFloat);
+                        if (parts.length === 4 && !parts.some(isNaN)) {
+                            coordsFromExif = parts; // [south, west, north, east]
+                            console.log(`レイヤー${id}: Exifから座標を読み込みました！`);
+                        }
+                    }
+                } catch(err) {
+                    console.log(`レイヤー${id}: Exifが存在しない、または読み取れませんでした。`);
+                }
+
+                // ② Exifになければ、従来のファイル名から座標を探す
+                if (!coordsFromExif) {
+                    const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
+                    const numParts = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
+                    if (numParts.length >= 4) {
+                        coordsFromFilename = numParts;
+                        console.log(`レイヤー${id}: ファイル名から座標を読み込みました。`);
+                    }
+                }
+
+                // Exif優先、なければファイル名を採用
+                const finalCoords = coordsFromExif || coordsFromFilename;
+
+                if (finalCoords) {
+                    // 入力欄にセット
+                    document.getElementById('swLat' + id).value = finalCoords[0];
+                    document.getElementById('swLng' + id).value = finalCoords[1];
+                    document.getElementById('neLat' + id).value = finalCoords[2];
+                    document.getElementById('neLng' + id).value = finalCoords[3];
+                    
+                    // 描画実行
+                    drawLayerFromDataUrl(id, dataUrl, finalCoords);
+                } else {
+                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。\n手動で補正欄に入力してください。");
+                }
+            };
+            reader.readAsDataURL(file);
         }
 
         function manualRedraw(id) {
@@ -204,38 +238,38 @@
                 alert("画像ファイルが選択されていません");
                 return;
             }
-            drawLayer(id, fileInput.files[0]);
-        }
-
-        function drawLayer(id, file) {
             const swLat = parseFloat(document.getElementById('swLat' + id).value);
             const swLng = parseFloat(document.getElementById('swLng' + id).value);
             const neLat = parseFloat(document.getElementById('neLat' + id).value);
             const neLng = parseFloat(document.getElementById('neLng' + id).value);
 
             if (isNaN(swLat) || isNaN(neLng)) return;
+            const coords = [swLat, swLng, neLat, neLng];
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const bounds = [[swLat, swLng], [neLat, neLng]];
-                const opacity = parseFloat(document.getElementById('range' + id).value);
-
-                // 既存のレイヤーがあれば削除
-                if (layers[id].overlay) {
-                    map.removeLayer(layers[id].overlay);
-                }
-
-                // 画像オーバーレイを追加
-                layers[id].overlay = L.imageOverlay(e.target.result, bounds, {
-                    opacity: opacity,
-                    zIndex: id * 100 // レイヤー2を手前に表示
-                }).addTo(map);
-
-                // レイヤー2を読み込んだときも、全体が見えるようにズームするかはお好みで
-                // ここでは「最後に読み込んだ方」にズームするようにします
-                map.fitBounds(bounds);
+                drawLayerFromDataUrl(id, e.target.result, coords);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        function drawLayerFromDataUrl(id, dataUrl, coords) {
+            // coords は [south, west, north, east] の順
+            const bounds = [[coords[0], coords[1]], [coords[2], coords[3]]];
+            const opacity = parseFloat(document.getElementById('range' + id).value);
+
+            // 既存のレイヤーがあれば削除
+            if (layers[id].overlay) {
+                map.removeLayer(layers[id].overlay);
+            }
+
+            // 画像オーバーレイを追加
+            layers[id].overlay = L.imageOverlay(dataUrl, bounds, {
+                opacity: opacity,
+                zIndex: id * 100 // レイヤー2を手前に表示
+            }).addTo(map);
+
+            map.fitBounds(bounds);
         }
 
         function updateOpacity(id) {
@@ -246,7 +280,7 @@
             }
         }
 
-        // --- 4. GPS Logic (前回成功版を維持) ---
+        // --- 4. GPS Logic ---
         let gpsMarker = null;
         let gpsWatchId = null;
 
