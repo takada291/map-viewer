@@ -97,7 +97,6 @@
         }
         #gps-btn.active { color: white; background: #007bff; }
 
-        /* 追加：現在地座標表示パネルのスタイル */
         #coord-display {
             position: absolute;
             bottom: 30px;
@@ -111,8 +110,8 @@
             font-size: 13px;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            display: none; /* 初期状態は非表示 */
-            pointer-events: none; /* タッチ操作の邪魔にならないようにする */
+            display: none; 
+            pointer-events: none; 
             white-space: nowrap;
         }
     </style>
@@ -121,7 +120,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.1</h1>
+        <h1>林小班図 v3.2</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -293,13 +292,13 @@
             }
         }
 
-        // --- 4. GPS Logic ---
+        // --- 4. GPS Logic (iPhone対応強化版) ---
         let gpsMarker = null;
         let gpsWatchId = null;
 
         function toggleGPS() {
             const btn = document.getElementById('gps-btn');
-            const coordDisplay = document.getElementById('coord-display'); // 追加：座標表示要素の取得
+            const coordDisplay = document.getElementById('coord-display');
             
             if (gpsWatchId) {
                 navigator.geolocation.clearWatch(gpsWatchId);
@@ -307,22 +306,28 @@
                 btn.classList.remove('active');
                 if (gpsMarker) map.removeLayer(gpsMarker);
                 gpsMarker = null;
-                coordDisplay.style.display = 'none'; // 追加：GPSオフ時に座標表示を隠す
+                coordDisplay.style.display = 'none';
             } else {
                 btn.classList.add('active');
-                coordDisplay.style.display = 'block'; // 追加：GPSオン時に座標表示枠を表示
-                coordDisplay.innerText = "GPS信号を検索中..."; // 追加：初期メッセージ
+                coordDisplay.style.display = 'block';
+                coordDisplay.innerText = "GPS信号を検索中...";
                 
+                // iPhoneのキャッシュ対策オプションを追加
+                const gpsOptions = {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,        // キャッシュされた位置情報を許容しない
+                    timeout: 10000        // 10秒でタイムアウト判定をして再取得を促す
+                };
+
                 gpsWatchId = navigator.geolocation.watchPosition(
                     (pos) => {
                         const lat = pos.coords.latitude;
                         const lng = pos.coords.longitude;
                         
-                        // 追加：取得した緯度経度を画面のパネルにリアルタイム表示（小数点第6位まで）
                         coordDisplay.innerText = `緯度: ${lat.toFixed(6)} / 経度: ${lng.toFixed(6)}`;
 
                         if (!gpsMarker) {
-                            alert("【受信成功】GPS信号をキャッチしました！\n現在地に赤い丸を表示します。");
+                            // 邪魔にならないよう初回アラートを削除し、スムーズに表示
                             gpsMarker = L.circleMarker([lat, lng], {
                                 color: 'white',
                                 weight: 4,
@@ -335,11 +340,16 @@
                         }
                     },
                     (err) => {
-                        alert("GPSエラー: " + err.message);
-                        btn.classList.remove('active');
-                        coordDisplay.style.display = 'none'; // エラー時は非表示に戻す
+                        // タイムアウトエラー(code:3)の場合は再試行中なのでアラートを出さずにやり過ごす
+                        if (err.code !== 3) {
+                            alert("GPSエラー: " + err.message);
+                            btn.classList.remove('active');
+                            coordDisplay.style.display = 'none';
+                        } else {
+                            coordDisplay.innerText = "GPS信号を再取得中...";
+                        }
                     },
-                    { enableHighAccuracy: true }
+                    gpsOptions // 強化したオプションを適用
                 );
             }
         }
