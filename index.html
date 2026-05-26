@@ -23,7 +23,7 @@
             padding: 8px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            width: 270px;
+            width: 250px; /* 少しスリム化 */
             max-height: 85vh;
             overflow-y: auto;
             transition: all 0.3s;
@@ -42,10 +42,29 @@
         }
 
         h1 { font-size: 14px; margin: 0 0 10px 0; color: #333; display: inline-block; }
-        h3 { font-size: 12px; margin: 0 0 5px 0; color: #007bff; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
 
-        .layer-group { margin-bottom: 15px; }
-        .layer-group:last-child { margin-bottom: 5px; }
+        /* レイヤーグループのシェイプアップ（折りたたみ式） */
+        .layer-group { 
+            margin-bottom: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            padding: 5px; 
+            background: #fff; 
+        }
+        summary.layer-title { 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #007bff; 
+            cursor: pointer; 
+            outline: none; 
+            list-style: none; 
+            margin: 0; 
+            padding: 2px 0; 
+        }
+        summary.layer-title::-webkit-details-marker { display: none; }
+        summary.layer-title::before { content: "▶ "; font-size: 10px; color: #666; }
+        details[open].layer-group > summary.layer-title::before { content: "▼ "; }
+        .layer-content { margin-top: 5px; }
 
         input[type="file"] {
             font-size: 11px;
@@ -56,11 +75,12 @@
         label { font-size: 11px; display: block; margin-top: 2px; color: #555; }
         input[type="range"] { width: 100%; margin: 2px 0 5px 0; }
         
-        details { margin-top: 2px; border: 1px solid #eee; border-radius: 4px; padding: 2px; }
-        summary { font-size: 11px; cursor: pointer; color: #555; outline: none; list-style: none; font-weight: bold; }
-        summary::-webkit-details-marker { display: none; }
-        summary::after { content: " ▶ 手動補正"; font-size: 10px; }
-        details[open] summary::after { content: " ▼ 閉じる"; }
+        /* 手動補正部分のシェイプアップ */
+        details.manual-coord { margin-top: 5px; border: 1px solid #eee; border-radius: 4px; padding: 4px; background: #fdfdfd; }
+        details.manual-coord summary { font-size: 11px; cursor: pointer; color: #555; outline: none; list-style: none; font-weight: bold; }
+        details.manual-coord summary::-webkit-details-marker { display: none; }
+        details.manual-coord summary::before { content: "▶ 手動補正"; font-size: 10px; }
+        details.manual-coord[open] summary::before { content: "▼ 閉じる"; }
 
         .coord-row { display: flex; gap: 5px; margin-top: 3px; }
         input[type="number"] { flex: 1; font-size: 11px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; }
@@ -120,48 +140,52 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.3</h1>
+        <h1>林小班図 v3.4</h1>
         
         <div id="panel-content">
-            <div class="layer-group">
-                <h3>レイヤー1 (奥/下)</h3>
-                <input type="file" id="file1" accept="image/*" onchange="handleFileSelect(1)">
-                <label>透明度: <span id="opVal1">0.5</span></label>
-                <input type="range" id="range1" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(1)">
-                
-                <details>
-                    <summary></summary>
-                    <label>左下 (南西)</label>
-                    <div class="coord-row">
-                        <input type="number" id="swLat1" step="0.000001"><input type="number" id="swLng1" step="0.000001">
-                    </div>
-                    <label>右上 (北東)</label>
-                    <div class="coord-row">
-                        <input type="number" id="neLat1" step="0.000001"><input type="number" id="neLng1" step="0.000001">
-                    </div>
-                    <button class="redraw-btn" onclick="manualRedraw(1)">再描画</button>
-                </details>
-            </div>
+            <details class="layer-group" open>
+                <summary class="layer-title">レイヤー1 (奥/下)</summary>
+                <div class="layer-content">
+                    <input type="file" id="file1" accept="image/*" onchange="handleFileSelect(1)">
+                    <label>透明度: <span id="opVal1">0.5</span></label>
+                    <input type="range" id="range1" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(1)">
+                    
+                    <details class="manual-coord">
+                        <summary></summary>
+                        <label>左下 (南西)</label>
+                        <div class="coord-row">
+                            <input type="number" id="swLat1" step="0.000001" placeholder="緯度"><input type="number" id="swLng1" step="0.000001" placeholder="経度">
+                        </div>
+                        <label>右上 (北東)</label>
+                        <div class="coord-row">
+                            <input type="number" id="neLat1" step="0.000001" placeholder="緯度"><input type="number" id="neLng1" step="0.000001" placeholder="経度">
+                        </div>
+                        <button class="redraw-btn" onclick="manualRedraw(1)">再描画</button>
+                    </details>
+                </div>
+            </details>
 
-            <div class="layer-group">
-                <h3>レイヤー2 (手前/上)</h3>
-                <input type="file" id="file2" accept="image/*" onchange="handleFileSelect(2)">
-                <label>透明度: <span id="opVal2">0.5</span></label>
-                <input type="range" id="range2" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(2)">
-                
-                <details>
-                    <summary></summary>
-                    <label>左下 (南西)</label>
-                    <div class="coord-row">
-                        <input type="number" id="swLat2" step="0.000001"><input type="number" id="swLng2" step="0.000001">
-                    </div>
-                    <label>右上 (北東)</label>
-                    <div class="coord-row">
-                        <input type="number" id="neLat2" step="0.000001"><input type="number" id="neLng2" step="0.000001">
-                    </div>
-                    <button class="redraw-btn" onclick="manualRedraw(2)">再描画</button>
-                </details>
-            </div>
+            <details class="layer-group">
+                <summary class="layer-title">レイヤー2 (手前/上)</summary>
+                <div class="layer-content">
+                    <input type="file" id="file2" accept="image/*" onchange="handleFileSelect(2)">
+                    <label>透明度: <span id="opVal2">0.5</span></label>
+                    <input type="range" id="range2" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(2)">
+                    
+                    <details class="manual-coord">
+                        <summary></summary>
+                        <label>左下 (南西)</label>
+                        <div class="coord-row">
+                            <input type="number" id="swLat2" step="0.000001" placeholder="緯度"><input type="number" id="swLng2" step="0.000001" placeholder="経度">
+                        </div>
+                        <label>右上 (北東)</label>
+                        <div class="coord-row">
+                            <input type="number" id="neLat2" step="0.000001" placeholder="緯度"><input type="number" id="neLng2" step="0.000001" placeholder="経度">
+                        </div>
+                        <button class="redraw-btn" onclick="manualRedraw(2)">再描画</button>
+                    </details>
+                </div>
+            </details>
         </div>
     </div>
 
@@ -182,7 +206,6 @@
         }
 
         // --- 2. Map & Base Layers Setup ---
-        // 背景図レイヤーの定義
         const gsiStd = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
             attribution: "地理院タイル",
             maxZoom: 18
@@ -198,7 +221,6 @@
             maxZoom: 19
         });
 
-        // 地図の初期化（デフォルトは地理院地図 標準）
         const map = L.map('map', { 
             zoomControl: false,
             layers: [gsiStd] 
@@ -206,14 +228,14 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 背景図の切り替えコントロールを追加（右上に配置されます）
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
             "OpenStreetMap": osm
         };
-        L.control.layers(baseMaps).addTo(map);
-
+        
+        // ★変更点: コントロールの位置を左下(bottomleft)に移動してカブりを防止
+        L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
 
         // --- 3. Dual Layer Logic ---
         const layers = {
@@ -240,7 +262,6 @@
                         const parts = coordsStr.split(',').map(parseFloat);
                         if (parts.length === 4 && !parts.some(isNaN)) {
                             coordsFromExif = parts; 
-                            console.log(`レイヤー${id}: Exifから座標を読み込みました！`);
                         }
                     }
                 } catch(err) {
@@ -252,142 +273,7 @@
                     const numParts = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
                     if (numParts.length >= 4) {
                         coordsFromFilename = numParts;
-                        console.log(`レイヤー${id}: ファイル名から座標を読み込みました。`);
                     }
                 }
 
                 const finalCoords = coordsFromExif || coordsFromFilename;
-
-                if (finalCoords) {
-                    document.getElementById('swLat' + id).value = finalCoords[0];
-                    document.getElementById('swLng' + id).value = finalCoords[1];
-                    document.getElementById('neLat' + id).value = finalCoords[2];
-                    document.getElementById('neLng' + id).value = finalCoords[3];
-                    
-                    drawLayerFromDataUrl(id, dataUrl, finalCoords);
-                } else {
-                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。\n手動で補正欄に入力してください。");
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function manualRedraw(id) {
-            const fileInput = document.getElementById('file' + id);
-            if (!fileInput.files[0]) {
-                alert("画像ファイルが選択されていません");
-                return;
-            }
-            const swLat = parseFloat(document.getElementById('swLat' + id).value);
-            const swLng = parseFloat(document.getElementById('swLng' + id).value);
-            const neLat = parseFloat(document.getElementById('neLat' + id).value);
-            const neLng = parseFloat(document.getElementById('neLng' + id).value);
-
-            if (isNaN(swLat) || isNaN(neLng)) return;
-            const coords = [swLat, swLng, neLat, neLng];
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                drawLayerFromDataUrl(id, e.target.result, coords);
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-
-        function drawLayerFromDataUrl(id, dataUrl, coords) {
-            const bounds = [[coords[0], coords[1]], [coords[2], coords[3]]];
-            const opacity = parseFloat(document.getElementById('range' + id).value);
-
-            if (layers[id].overlay) {
-                map.removeLayer(layers[id].overlay);
-            }
-
-            layers[id].overlay = L.imageOverlay(dataUrl, bounds, {
-                opacity: opacity,
-                zIndex: id * 100 
-            }).addTo(map);
-
-            map.fitBounds(bounds);
-        }
-
-        function updateOpacity(id) {
-            const val = document.getElementById('range' + id).value;
-            document.getElementById('opVal' + id).innerText = val;
-            if (layers[id].overlay) {
-                layers[id].overlay.setOpacity(val);
-            }
-        }
-
-        // --- 4. GPS Logic (iPhone対応強化版) ---
-        let gpsMarker = null;
-        let gpsWatchId = null;
-
-        function toggleGPS() {
-            const btn = document.getElementById('gps-btn');
-            const coordDisplay = document.getElementById('coord-display');
-            
-            if (gpsWatchId) {
-                navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = null;
-                btn.classList.remove('active');
-                if (gpsMarker) map.removeLayer(gpsMarker);
-                gpsMarker = null;
-                coordDisplay.style.display = 'none';
-            } else {
-                btn.classList.add('active');
-                coordDisplay.style.display = 'block';
-                coordDisplay.innerText = "GPS信号を検索中...";
-                
-                const gpsOptions = {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,        
-                    timeout: 10000        
-                };
-
-                gpsWatchId = navigator.geolocation.watchPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        
-                        coordDisplay.innerText = `緯度: ${lat.toFixed(6)} / 経度: ${lng.toFixed(6)}`;
-
-                        if (!gpsMarker) {
-                            gpsMarker = L.circleMarker([lat, lng], {
-                                color: 'white',
-                                weight: 4,
-                                fillColor: 'red',
-                                fillOpacity: 1,
-                                radius: 12
-                            }).addTo(map);
-                        } else {
-                            gpsMarker.setLatLng([lat, lng]);
-                        }
-                    },
-                    (err) => {
-                        if (err.code !== 3) {
-                            alert("GPSエラー: " + err.message);
-                            btn.classList.remove('active');
-                            coordDisplay.style.display = 'none';
-                        } else {
-                            coordDisplay.innerText = "GPS信号を再取得中...";
-                        }
-                    },
-                    gpsOptions 
-                );
-            }
-        }
-
-        // --- 5. Panel Toggle ---
-        function toggleControls() {
-            const content = document.getElementById('panel-content');
-            const btn = document.getElementById('toggle-panel');
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                btn.innerText = '−';
-            } else {
-                content.style.display = 'none';
-                btn.innerText = '＋';
-            }
-        }
-    </script>
-</body>
-</html>
