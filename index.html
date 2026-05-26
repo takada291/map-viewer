@@ -120,7 +120,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.2</h1>
+        <h1>林小班図 v3.3</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -181,14 +181,39 @@
                 .catch(err => console.log('SW Failed', err));
         }
 
-        // --- 2. Map Setup ---
-        const map = L.map('map', { zoomControl: false }).setView([36.064, 136.220], 14);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+        // --- 2. Map & Base Layers Setup ---
+        // 背景図レイヤーの定義
+        const gsiStd = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
             attribution: "地理院タイル",
             maxZoom: 18
-        }).addTo(map);
+        });
+
+        const gsiOrtho = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', {
+            attribution: "地理院タイル (オルソ)",
+            maxZoom: 18
+        });
+
+        const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+            maxZoom: 19
+        });
+
+        // 地図の初期化（デフォルトは地理院地図 標準）
+        const map = L.map('map', { 
+            zoomControl: false,
+            layers: [gsiStd] 
+        }).setView([36.064, 136.220], 14);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // 背景図の切り替えコントロールを追加（右上に配置されます）
+        const baseMaps = {
+            "地理院地図 (標準)": gsiStd,
+            "地理院地図 (オルソ)": gsiOrtho,
+            "OpenStreetMap": osm
+        };
+        L.control.layers(baseMaps).addTo(map);
+
 
         // --- 3. Dual Layer Logic ---
         const layers = {
@@ -312,11 +337,10 @@
                 coordDisplay.style.display = 'block';
                 coordDisplay.innerText = "GPS信号を検索中...";
                 
-                // iPhoneのキャッシュ対策オプションを追加
                 const gpsOptions = {
                     enableHighAccuracy: true,
-                    maximumAge: 0,        // キャッシュされた位置情報を許容しない
-                    timeout: 10000        // 10秒でタイムアウト判定をして再取得を促す
+                    maximumAge: 0,        
+                    timeout: 10000        
                 };
 
                 gpsWatchId = navigator.geolocation.watchPosition(
@@ -327,7 +351,6 @@
                         coordDisplay.innerText = `緯度: ${lat.toFixed(6)} / 経度: ${lng.toFixed(6)}`;
 
                         if (!gpsMarker) {
-                            // 邪魔にならないよう初回アラートを削除し、スムーズに表示
                             gpsMarker = L.circleMarker([lat, lng], {
                                 color: 'white',
                                 weight: 4,
@@ -340,7 +363,6 @@
                         }
                     },
                     (err) => {
-                        // タイムアウトエラー(code:3)の場合は再試行中なのでアラートを出さずにやり過ごす
                         if (err.code !== 3) {
                             alert("GPSエラー: " + err.message);
                             btn.classList.remove('active');
@@ -349,7 +371,7 @@
                             coordDisplay.innerText = "GPS信号を再取得中...";
                         }
                     },
-                    gpsOptions // 強化したオプションを適用
+                    gpsOptions 
                 );
             }
         }
