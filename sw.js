@@ -1,4 +1,4 @@
-const CACHE_NAME = 'map-viewer-v3.4.0'; /* バージョンを更新 */
+const CACHE_NAME = 'map-viewer-v3.5.0'; /* バージョンを更新 */
 const ASSETS = [
   './',
   './index.html',
