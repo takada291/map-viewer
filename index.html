@@ -117,7 +117,7 @@
             white-space: nowrap;
         }
 
-        /* ★超重要★ Leafletの標準コントロール（ズーム＆レイヤー切替）をGPSボタンの上に押し上げる */
+        /* Leafletの標準コントロール（ズーム＆レイヤー切替）をGPSボタンの上に押し上げる */
         .leaflet-bottom.leaflet-right {
             margin-bottom: 80px !important;
         }
@@ -127,7 +127,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.5</h1>
+        <h1>林小班図 v3.6</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -204,7 +204,7 @@
             maxZoom: 19
         });
 
-        // マップ初期化
+        // マップ初期化 (一旦福井県庁を中心に設定するが、後で現在地にフォーカスする)
         const map = L.map('map', { 
             zoomControl: false,
             layers: [gsiStd] 
@@ -213,13 +213,12 @@
         // ズームコントロールを右下に
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 背景図切替コントロール（右下に配置し、CSSでGPSボタンとの干渉を回避）
+        // 背景図切替コントロール
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
             "OpenStreetMap": osm
         };
-        // ★修正点：エラーが出ないよう安全な記述 `{}` に戻しました
         L.control.layers(baseMaps, {}, { position: 'bottomright' }).addTo(map);
 
 
@@ -327,6 +326,11 @@
         let gpsMarker = null;
         let gpsWatchId = null;
 
+        // ★追加：現在地にフォーカスする関数
+        function focusOnLocation(lat, lng) {
+            map.setView([lat, lng], 16); // ズームレベル16で現在地にフォーカス
+        }
+
         function toggleGPS() {
             const btn = document.getElementById('gps-btn');
             const coordDisplay = document.getElementById('coord-display');
@@ -364,6 +368,8 @@
                                 fillOpacity: 1,
                                 radius: 12
                             }).addTo(map);
+                            // ★追加：GPSボタンを押して初めて位置を取得したときにフォーカス
+                            focusOnLocation(lat, lng);
                         } else {
                             gpsMarker.setLatLng([lat, lng]);
                         }
@@ -382,7 +388,27 @@
             }
         }
 
-        // --- 5. Panel Toggle ---
+        // --- 5. 起動時のバックグラウンドGPS取得 (1回のみ) ---
+        // ★追加：アプリ起動時に現在地を取得してフォーカスする
+        function initLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        focusOnLocation(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    (err) => {
+                        console.log("起動時の位置情報取得に失敗しました", err);
+                        // 失敗した場合は福井県庁のまま（何もしない）
+                    },
+                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 } // 素早く取得するため精度は低めでOK
+                );
+            }
+        }
+        
+        // ページ読み込み完了時に実行
+        window.addEventListener('load', initLocation);
+
+        // --- 6. Panel Toggle ---
         function toggleControls() {
             const content = document.getElementById('panel-content');
             const btn = document.getElementById('toggle-panel');
