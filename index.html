@@ -108,6 +108,26 @@
         }
         #gps-btn.active { color: white; background: #007bff; }
 
+        /* カメラ（ワイプ）起動ボタン */
+        #camera-btn {
+            position: absolute;
+            bottom: 85px; /* GPSボタンの上に配置 */
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #camera-btn.active { color: white; background: #28a745; }
+
         /* 現在地座標表示 */
         #coord-display {
             position: absolute;
@@ -127,9 +147,26 @@
             white-space: nowrap;
         }
 
-        /* Leafletの標準コントロール（ズーム＆レイヤー切替）をGPSボタンの上に押し上げる */
+        /* ワイプカメラ映像の表示枠（左下） */
+        #camera-preview {
+            position: absolute;
+            bottom: 25px;
+            left: 10px;
+            width: 100px;  
+            height: 140px; 
+            object-fit: cover; 
+            border: 3px solid white; 
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none; 
+            background-color: #000;
+            pointer-events: none; 
+        }
+
+        /* Leafletの標準コントロール（ズーム＆レイヤー切替）をカメラボタンの上に押し上げる */
         .leaflet-bottom.leaflet-right {
-            margin-bottom: 80px !important;
+            margin-bottom: 140px !important;
         }
     </style>
 </head>
@@ -137,7 +174,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.7</h1>
+        <h1>林小班図 v3.8</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -182,8 +219,12 @@
         </div>
     </div>
 
+    <!-- カメラワイプ表示用ビデオ要素（iPhone等iOSでのインライン再生のため playsinline 属性が必須） -->
+    <video id="camera-preview" autoplay playsinline muted></video>
+
     <div id="coord-display">緯度: -- / 経度: --</div>
 
+    <div id="camera-btn" onclick="toggleCamera()">📷</div>
     <div id="gps-btn" onclick="toggleGPS()">📍</div>
     <div id="map"></div>
 
@@ -209,7 +250,6 @@
             maxZoom: 18
         });
 
-        // ★追加：ESRI 衛星画像 レイヤー
         const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
             maxZoom: 18
@@ -233,7 +273,7 @@
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
-            "衛星画像 (Esri)": esriOrtho, // ★追加
+            "衛星画像 (Esri)": esriOrtho,
             "OpenStreetMap": osm
         };
         L.control.layers(baseMaps, {}, { position: 'bottomright' }).addTo(map);
@@ -288,7 +328,8 @@
                     
                     drawLayerFromDataUrl(id, dataUrl, finalCoords);
                 } else {
-                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。\n手動で補正欄に入力してください。");
+                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。
+手動で補正欄に入力してください。");
                 }
             };
             reader.readAsDataURL(file);
@@ -403,7 +444,6 @@
             }
         }
 
-        // --- 5. 起動時のバックグラウンドGPS取得 ---
         function initLocation() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
@@ -419,6 +459,37 @@
         }
         
         window.addEventListener('load', initLocation);
+
+        // --- 5. ワイプカメラ機能 ---
+        let currentStream = null;
+
+        function toggleCamera() {
+            const video = document.getElementById('camera-preview');
+            const btn = document.getElementById('camera-btn');
+
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+                video.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                const constraints = {
+                    video: { facingMode: "environment" },
+                    audio: false
+                };
+
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(stream => {
+                        currentStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        btn.classList.add('active');
+                    })
+                    .catch(err => {
+                        alert("カメラの起動に失敗しました（権限が許可されていない可能性があります）\n" + err.message);
+                    });
+            }
+        }
 
         // --- 6. Panel Toggle ---
         function toggleControls() {
