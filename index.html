@@ -10,13 +10,12 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WXBP6CPKLP"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
-      // ここも測定IDに書き換えます
       gtag('config', 'G-WXBP6CPKLP');
     </script>
     
@@ -174,7 +173,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v3.8</h1>
+        <h1>林小班図 v3.9</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -251,7 +250,7 @@
         });
 
         const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+            attribution: "Tiles &copy; Esri &mdash; Source: Esri",
             maxZoom: 18
         });
 
@@ -328,8 +327,8 @@
                     
                     drawLayerFromDataUrl(id, dataUrl, finalCoords);
                 } else {
-                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。
-手動で補正欄に入力してください。");
+                    // ★前回ここでエラーになっていました！修正済みです
+                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。\n手動で補正欄に入力してください。");
                 }
             };
             reader.readAsDataURL(file);
@@ -486,6 +485,7 @@
                         btn.classList.add('active');
                     })
                     .catch(err => {
+                        // ★ここにも念のため安全な改行を使用しています
                         alert("カメラの起動に失敗しました（権限が許可されていない可能性があります）\n" + err.message);
                     });
             }
