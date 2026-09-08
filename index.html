@@ -10,13 +10,14 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WXBP6CPKLP"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      // ここも測定IDに書き換えます
+      // 測定ID
       gtag('config', 'G-WXBP6CPKLP');
     </script>
     
@@ -111,7 +112,7 @@
         /* カメラ（ワイプ）起動ボタン */
         #camera-btn {
             position: absolute;
-            bottom: 85px; /* GPSボタンの上に配置 */
+            bottom: 85px; 
             right: 15px;
             z-index: 1000;
             background: white;
@@ -147,13 +148,13 @@
             white-space: nowrap;
         }
 
-        /* ワイプカメラ映像の表示枠（左下） - 1.5倍に拡大！ */
+        /* ワイプカメラ映像の表示枠（左下） */
         #camera-preview {
             position: absolute;
             bottom: 25px;
             left: 10px;
-            width: 150px;  /* 100pxから1.5倍に拡大 */
-            height: 210px; /* 140pxから1.5倍に拡大 */
+            width: 150px;  
+            height: 210px; 
             object-fit: cover; 
             border: 3px solid white; 
             border-radius: 8px;
@@ -174,7 +175,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.0</h1>
+        <h1>林小班図 v4.1</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -219,7 +220,7 @@
         </div>
     </div>
 
-    <!-- カメラワイプ表示用ビデオ要素（iPhone等iOSでのインライン再生のため playsinline 属性が必須） -->
+    <!-- カメラワイプ表示用ビデオ要素 -->
     <video id="camera-preview" autoplay playsinline muted></video>
 
     <div id="coord-display">緯度: -- / 経度: --</div>
@@ -250,8 +251,15 @@
             maxZoom: 18
         });
 
+        // ★追加：全国林班図 レイヤー
+        const rinpan = L.tileLayer('https://rinya-tiles.geospatial.jp/fr_layer_webp_2025/{z}/{x}/{y}.webp', {
+            attribution: "林野庁 森林計画対象森林レイヤ",
+            crossOrigin: "anonymous",
+            maxZoom: 16
+        });
+
         const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: "Tiles &copy; Esri &mdash; Source: Esri",
+            attribution: "Tiles &copy; Esri",
             maxZoom: 18
         });
 
@@ -269,10 +277,11 @@
         // ズームコントロールを右下に
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 背景図切替コントロール
+        // 背景図切替コントロール（★全国林班図を組み込み）
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
+            "全国林班図": rinpan,
             "衛星画像 (Esri)": esriOrtho,
             "OpenStreetMap": osm
         };
