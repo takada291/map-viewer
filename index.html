@@ -175,7 +175,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.1</h1>
+        <h1>林小班図 v4.2</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -251,7 +251,12 @@
             maxZoom: 18
         });
 
-        // ★追加：全国林班図 レイヤー
+        // ★追加：傾斜量図 レイヤー
+        const slope = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png', {
+            attribution: "地理院タイル (傾斜量図)",
+            maxZoom: 18
+        });
+
         const rinpan = L.tileLayer('https://rinya-tiles.geospatial.jp/fr_layer_webp_2025/{z}/{x}/{y}.webp', {
             attribution: "林野庁 森林計画対象森林レイヤ",
             crossOrigin: "anonymous",
@@ -277,10 +282,11 @@
         // ズームコントロールを右下に
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 背景図切替コントロール（★全国林班図を組み込み）
+        // 背景図切替コントロール（★傾斜量図を指定の場所に組み込み）
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
+            "傾斜量図 (地形把握)": slope, // ★追加
             "全国林班図": rinpan,
             "衛星画像 (Esri)": esriOrtho,
             "OpenStreetMap": osm
