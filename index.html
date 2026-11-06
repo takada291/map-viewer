@@ -56,15 +56,9 @@
         .layer-group { margin-bottom: 15px; }
         .layer-group:last-child { margin-bottom: 5px; }
 
-        input[type="file"] {
-            font-size: 11px;
-            width: 100%;
-            margin-bottom: 5px;
-        }
-        
+        input[type="file"] { font-size: 11px; width: 100%; margin-bottom: 5px; }
         label { font-size: 11px; display: block; margin-top: 2px; color: #555; }
         input[type="range"] { width: 100%; margin: 2px 0 5px 0; }
-        
         details { margin-top: 2px; border: 1px solid #eee; border-radius: 4px; padding: 2px; }
         summary { font-size: 11px; cursor: pointer; color: #555; outline: none; list-style: none; font-weight: bold; }
         summary::-webkit-details-marker { display: none; }
@@ -75,229 +69,101 @@
         input[type="number"] { flex: 1; font-size: 11px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; }
         
         button.redraw-btn {
-            width: 100%;
-            font-size: 11px;
-            padding: 4px;
-            margin-top: 4px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            width: 100%; font-size: 11px; padding: 4px; margin-top: 4px;
+            background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;
         }
         button.redraw-btn:hover { background: #0056b3; }
 
-        /* GPSボタン */
-        #gps-btn {
-            position: absolute;
-            bottom: 25px;
-            right: 15px;
-            z-index: 1000;
-            background: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+        #gps-btn, #camera-btn, #qr-reader-btn {
+            position: absolute; right: 15px; z-index: 1000; background: white;
+            width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
+        #gps-btn { bottom: 25px; font-size: 24px; }
         #gps-btn.active { color: white; background: #007bff; }
-
-        /* カメラ（ワイプ）起動ボタン */
-        #camera-btn {
-            position: absolute;
-            bottom: 85px; 
-            right: 15px;
-            z-index: 1000;
-            background: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
+        
+        #camera-btn { bottom: 85px; font-size: 22px; }
         #camera-btn.active { color: white; background: #28a745; }
-
-        /* QRコード読み取りボタン */
-        #qr-reader-btn {
-            position: absolute;
-            bottom: 145px; 
-            right: 15px;
-            z-index: 1000;
-            background: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
+        
+        #qr-reader-btn { bottom: 145px; font-size: 22px; }
         #qr-reader-btn.active { color: white; background: #9b59b6; }
 
-        /* 現在地座標表示 */
         #coord-display {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            display: none; 
-            pointer-events: none; 
-            white-space: nowrap;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000;
+            background: rgba(0, 0, 0, 0.7); color: #fff; padding: 6px 15px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: none; pointer-events: none; white-space: nowrap;
         }
 
-        /* ワイプカメラ映像の表示枠（左下） */
         #camera-preview {
-            position: absolute;
-            bottom: 25px;
-            left: 10px;
-            width: 150px;  
-            height: 210px; 
-            object-fit: cover; 
-            border: 3px solid white; 
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            z-index: 1000;
-            display: none; 
-            background-color: #000;
-            pointer-events: none; 
+            position: absolute; bottom: 25px; left: 10px; width: 150px; height: 210px; 
+            object-fit: cover; border: 3px solid white; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 1000; display: none; 
+            background-color: #000; pointer-events: none; 
         }
 
-        /* QRリーダー表示枠 */
         #qr-reader-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 400px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            z-index: 2000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; max-width: 400px; background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 2000; display: none;
+            flex-direction: column; align-items: center;
         }
-        #qr-video {
-            width: 100%;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            background: #000;
-        }
+        #qr-video { width: 100%; border-radius: 4px; margin-bottom: 10px; background: #000; }
         
-        /* ★追加：ステータス表示用テキスト */
         #qr-status {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #555;
-            text-align: center;
-            width: 100%;
-            word-wrap: break-word;
+            font-size: 12px; font-weight: bold; margin-bottom: 10px; color: #555;
+            text-align: center; width: 100%; word-wrap: break-word;
         }
 
         .qr-close-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
+            background: #dc3545; color: white; border: none; padding: 8px 16px;
+            border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;
         }
 
-        /* Leafletの標準コントロールをQRリーダーボタンの上に押し上げる */
-        .leaflet-bottom.leaflet-right {
-            margin-bottom: 200px !important;
-        }
+        .leaflet-bottom.leaflet-right { margin-bottom: 200px !important; }
     </style>
 </head>
 <body>
-
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.5</h1>
-        
+        <h1>林小班図 v4.6</h1>
         <div id="panel-content">
             <div class="layer-group">
                 <h3>レイヤー1 (奥/下)</h3>
                 <input type="file" id="file1" accept="image/*" onchange="handleFileSelect(1)">
                 <label>透明度: <span id="opVal1">0.5</span></label>
                 <input type="range" id="range1" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(1)">
-                
-                <details>
-                    <summary></summary>
-                    <label>左下 (南西)</label>
-                    <div class="coord-row">
-                        <input type="number" id="swLat1" step="0.000001"><input type="number" id="swLng1" step="0.000001">
-                    </div>
-                    <label>右上 (北東)</label>
-                    <div class="coord-row">
-                        <input type="number" id="neLat1" step="0.000001"><input type="number" id="neLng1" step="0.000001">
-                    </div>
+                <details><summary></summary>
+                    <label>左下 (南西)</label><div class="coord-row"><input type="number" id="swLat1" step="0.000001"><input type="number" id="swLng1" step="0.000001"></div>
+                    <label>右上 (北東)</label><div class="coord-row"><input type="number" id="neLat1" step="0.000001"><input type="number" id="neLng1" step="0.000001"></div>
                     <button class="redraw-btn" onclick="manualRedraw(1)">再描画</button>
                 </details>
             </div>
-
             <div class="layer-group">
                 <h3>レイヤー2 (手前/上)</h3>
                 <input type="file" id="file2" accept="image/*" onchange="handleFileSelect(2)">
                 <label>透明度: <span id="opVal2">0.5</span></label>
                 <input type="range" id="range2" min="0" max="1" step="0.1" value="0.5" oninput="updateOpacity(2)">
-                
-                <details>
-                    <summary></summary>
-                    <label>左下 (南西)</label>
-                    <div class="coord-row">
-                        <input type="number" id="swLat2" step="0.000001"><input type="number" id="swLng2" step="0.000001">
-                    </div>
-                    <label>右上 (北東)</label>
-                    <div class="coord-row">
-                        <input type="number" id="neLat2" step="0.000001"><input type="number" id="neLng2" step="0.000001">
-                    </div>
+                <details><summary></summary>
+                    <label>左下 (南西)</label><div class="coord-row"><input type="number" id="swLat2" step="0.000001"><input type="number" id="swLng2" step="0.000001"></div>
+                    <label>右上 (北東)</label><div class="coord-row"><input type="number" id="neLat2" step="0.000001"><input type="number" id="neLng2" step="0.000001"></div>
                     <button class="redraw-btn" onclick="manualRedraw(2)">再描画</button>
                 </details>
             </div>
         </div>
     </div>
 
-    <!-- カメラワイプ表示用ビデオ要素 -->
     <video id="camera-preview" autoplay playsinline muted></video>
 
-    <!-- QRコード読み取り用UI -->
     <div id="qr-reader-container">
         <h3 style="margin:0 0 5px 0; font-size:14px; color:#333;">QRコード読み取り</h3>
-        <!-- ★追加：ステータス表示 -->
         <div id="qr-status">準備中...</div>
         <video id="qr-video" playsinline></video>
         <button class="qr-close-btn" onclick="stopQRScanner()">閉じる</button>
     </div>
 
     <div id="coord-display">緯度: -- / 経度: --</div>
-
     <div id="qr-reader-btn" onclick="startQRScanner()">🔍</div>
     <div id="camera-btn" onclick="toggleCamera()">📷</div>
     <div id="gps-btn" onclick="toggleGPS()">📍</div>
@@ -305,64 +171,39 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
-    <!-- jsQR（QRコード解析ライブラリ） -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <script>
-        // --- 1. Service Worker ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('SW Registered'))
-                .catch(err => console.log('SW Failed', err));
+                .then(() => console.log('SW Registered')).catch(err => console.log('SW Failed', err));
         }
 
-        // --- 2. Map & Base Layers Setup ---
-        const gsiStd = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
-            attribution: "地理院タイル", maxZoom: 18
-        });
-        const gsiOrtho = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', {
-            attribution: "地理院タイル (オルソ)", maxZoom: 18
-        });
-        const slope = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png', {
-            attribution: "地理院タイル (傾斜量図)", maxZoom: 18
-        });
-        const rinpan = L.tileLayer('https://rinya-tiles.geospatial.jp/fr_layer_webp_2025/{z}/{x}/{y}.webp', {
-            attribution: "林野庁 森林計画対象森林レイヤ", crossOrigin: "anonymous", maxZoom: 16
-        });
-        const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: "Tiles &copy; Esri", maxZoom: 18
-        });
-        const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: "&copy; OpenStreetMap", maxZoom: 19
-        });
+        const gsiStd = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "地理院タイル", maxZoom: 18 });
+        const gsiOrtho = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', { attribution: "地理院タイル (オルソ)", maxZoom: 18 });
+        const slope = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png', { attribution: "地理院タイル (傾斜量図)", maxZoom: 18 });
+        const rinpan = L.tileLayer('https://rinya-tiles.geospatial.jp/fr_layer_webp_2025/{z}/{x}/{y}.webp', { attribution: "林野庁 森林計画対象森林レイヤ", crossOrigin: "anonymous", maxZoom: 16 });
+        const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: "Tiles &copy; Esri", maxZoom: 18 });
+        const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: "&copy; OpenStreetMap", maxZoom: 19 });
 
         const map = L.map('map', { zoomControl: false, layers: [gsiStd] }).setView([36.064, 136.220], 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         const baseMaps = {
-            "地理院地図 (標準)": gsiStd,
-            "地理院地図 (オルソ)": gsiOrtho,
-            "傾斜量図 (地形把握)": slope, 
-            "全国林班図": rinpan,
-            "衛星画像 (Esri)": esriOrtho,
-            "OpenStreetMap": osm
+            "地理院地図 (標準)": gsiStd, "地理院地図 (オルソ)": gsiOrtho, "傾斜量図 (地形把握)": slope, 
+            "全国林班図": rinpan, "衛星画像 (Esri)": esriOrtho, "OpenStreetMap": osm
         };
         L.control.layers(baseMaps, {}, { position: 'bottomright' }).addTo(map);
 
-        // --- 3. Dual Layer Logic ---
         const layers = { 1: { overlay: null, opacity: 0.5 }, 2: { overlay: null, opacity: 0.5 } };
 
         function handleFileSelect(id) {
-            const fileInput = document.getElementById('file' + id);
-            const file = fileInput.files[0];
+            const file = document.getElementById('file' + id).files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const dataUrl = e.target.result;
-                let coordsFromExif = null;
-                let coordsFromFilename = null;
-
+                let coordsFromExif = null, coordsFromFilename = null;
                 try {
                     const exifObj = piexif.load(dataUrl);
                     const desc = exifObj["0th"][piexif.ImageIFD.ImageDescription];
@@ -371,39 +212,30 @@
                         if (parts.length === 4 && !parts.some(isNaN)) coordsFromExif = parts; 
                     }
                 } catch(err) {}
-
                 if (!coordsFromExif) {
                     const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
                     const numParts = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
                     if (numParts.length >= 4) coordsFromFilename = numParts;
                 }
-
                 const finalCoords = coordsFromExif || coordsFromFilename;
-
                 if (finalCoords) {
-                    document.getElementById('swLat' + id).value = finalCoords[0];
-                    document.getElementById('swLng' + id).value = finalCoords[1];
-                    document.getElementById('neLat' + id).value = finalCoords[2];
-                    document.getElementById('neLng' + id).value = finalCoords[3];
+                    document.getElementById('swLat' + id).value = finalCoords[0]; document.getElementById('swLng' + id).value = finalCoords[1];
+                    document.getElementById('neLat' + id).value = finalCoords[2]; document.getElementById('neLng' + id).value = finalCoords[3];
                     drawLayerFromDataUrl(id, dataUrl, finalCoords);
-                } else {
-                    alert("座標を読み取れませんでした。手動で補正欄に入力してください。");
-                }
+                } else { alert("座標を読み取れませんでした。"); }
             };
             reader.readAsDataURL(file);
         }
 
         function manualRedraw(id) {
-            const fileInput = document.getElementById('file' + id);
-            if (!fileInput.files[0]) return;
-            const swLat = parseFloat(document.getElementById('swLat' + id).value);
-            const swLng = parseFloat(document.getElementById('swLng' + id).value);
-            const neLat = parseFloat(document.getElementById('neLat' + id).value);
-            const neLng = parseFloat(document.getElementById('neLng' + id).value);
+            const file = document.getElementById('file' + id).files[0];
+            if (!file) return;
+            const swLat = parseFloat(document.getElementById('swLat' + id).value); const swLng = parseFloat(document.getElementById('swLng' + id).value);
+            const neLat = parseFloat(document.getElementById('neLat' + id).value); const neLng = parseFloat(document.getElementById('neLng' + id).value);
             if (isNaN(swLat) || isNaN(neLng)) return;
             const reader = new FileReader();
             reader.onload = function(e) { drawLayerFromDataUrl(id, e.target.result, [swLat, swLng, neLat, neLng]); };
-            reader.readAsDataURL(fileInput.files[0]);
+            reader.readAsDataURL(file);
         }
 
         function drawLayerFromDataUrl(id, dataUrl, coords) {
@@ -420,50 +252,30 @@
             if (layers[id].overlay) layers[id].overlay.setOpacity(val);
         }
 
-        // --- 4. GPS Logic ---
-        let gpsMarker = null;
-        let gpsWatchId = null;
-
+        let gpsMarker = null, gpsWatchId = null;
         function focusOnLocation(lat, lng) { map.setView([lat, lng], 16); }
 
         function toggleGPS() {
-            const btn = document.getElementById('gps-btn');
-            const coordDisplay = document.getElementById('coord-display');
+            const btn = document.getElementById('gps-btn'), coordDisplay = document.getElementById('coord-display');
             if (gpsWatchId) {
-                navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = null;
-                btn.classList.remove('active');
-                if (gpsMarker) map.removeLayer(gpsMarker);
-                gpsMarker = null;
+                navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null;
+                btn.classList.remove('active'); if (gpsMarker) map.removeLayer(gpsMarker); gpsMarker = null;
                 coordDisplay.style.display = 'none';
             } else {
-                btn.classList.add('active');
-                coordDisplay.style.display = 'block';
-                coordDisplay.innerText = "GPS信号を検索中...";
-                const gpsOptions = { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 };
+                btn.classList.add('active'); coordDisplay.style.display = 'block'; coordDisplay.innerText = "GPS信号を検索中...";
                 gpsWatchId = navigator.geolocation.watchPosition(
                     (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
+                        const lat = pos.coords.latitude, lng = pos.coords.longitude;
                         coordDisplay.innerText = `緯度: ${lat.toFixed(6)} / 経度: ${lng.toFixed(6)}`;
                         if (!gpsMarker) {
-                            gpsMarker = L.circleMarker([lat, lng], {
-                                color: 'white', weight: 4, fillColor: 'red', fillOpacity: 1, radius: 12
-                            }).addTo(map);
+                            gpsMarker = L.circleMarker([lat, lng], { color: 'white', weight: 4, fillColor: 'red', fillOpacity: 1, radius: 12 }).addTo(map);
                             focusOnLocation(lat, lng);
-                        } else {
-                            gpsMarker.setLatLng([lat, lng]);
-                        }
+                        } else { gpsMarker.setLatLng([lat, lng]); }
                     },
                     (err) => {
-                        if (err.code !== 3) {
-                            alert("GPSエラー: " + err.message);
-                            btn.classList.remove('active');
-                            coordDisplay.style.display = 'none';
-                        } else {
-                            coordDisplay.innerText = "GPS信号を再取得中...";
-                        }
-                    }, gpsOptions 
+                        if (err.code !== 3) { alert("GPSエラー: " + err.message); btn.classList.remove('active'); coordDisplay.style.display = 'none'; } 
+                        else { coordDisplay.innerText = "GPS信号を再取得中..."; }
+                    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 } 
                 );
             }
         }
@@ -472,64 +284,39 @@
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => { focusOnLocation(pos.coords.latitude, pos.coords.longitude); },
-                    (err) => { console.log("起動時の位置情報取得に失敗しました"); },
-                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+                    (err) => {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
                 );
             }
         }
         window.addEventListener('load', initLocation);
 
-        // --- 5. ワイプカメラ機能 ---
         let currentStream = null;
-
         function toggleCamera() {
-            const video = document.getElementById('camera-preview');
-            const btn = document.getElementById('camera-btn');
+            const video = document.getElementById('camera-preview'), btn = document.getElementById('camera-btn');
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-                currentStream = null;
-                video.style.display = 'none';
-                btn.classList.remove('active');
+                currentStream.getTracks().forEach(track => track.stop()); currentStream = null;
+                video.style.display = 'none'; btn.classList.remove('active');
             } else {
-                const constraints = {
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                };
-                navigator.mediaDevices.getUserMedia(constraints)
-                    .then(stream => {
-                        currentStream = stream;
-                        video.srcObject = stream;
-                        video.style.display = 'block';
-                        btn.classList.add('active');
-                    })
-                    .catch(err => {
-                        alert("カメラ起動に失敗しました\n" + err.message);
-                    });
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+                    .then(stream => { currentStream = stream; video.srcObject = stream; video.style.display = 'block'; btn.classList.add('active'); })
+                    .catch(err => { alert("カメラ起動失敗\n" + err.message); });
             }
         }
 
         function toggleControls() {
-            const content = document.getElementById('panel-content');
-            const btn = document.getElementById('toggle-panel');
-            if (content.style.display === 'none') {
-                content.style.display = 'block'; btn.innerText = '−';
-            } else {
-                content.style.display = 'none'; btn.innerText = '＋';
-            }
+            const content = document.getElementById('panel-content'), btn = document.getElementById('toggle-panel');
+            if (content.style.display === 'none') { content.style.display = 'block'; btn.innerText = '−'; } 
+            else { content.style.display = 'none'; btn.innerText = '＋'; }
         }
 
-        // --- 7. ★追加・改良：QRコード読み取り機能 (ステータス表示付き) ---
+        // --- 7. ★修正：QRコード読み取り機能 (URLジャンプ対応) ---
         let qrStream = null;
         let qrGeoJsonLayer = null;
+        let lastScannedData = ""; // 重複スキャン防止用
 
         function startQRScanner() {
-            // ★ライブラリ読み込みチェック
             if (typeof jsQR === 'undefined') {
-                alert("エラー：QRコード解析ライブラリ（jsQR）が読み込めていません。\n通信環境の良い場所で画面を再読み込み（リロード）してキャッシュさせてください。");
+                alert("エラー：QRコード解析ライブラリ（jsQR）が読み込めていません。\n通信環境の良い場所でリロードしてください。");
                 return;
             }
 
@@ -539,22 +326,14 @@
             const status = document.getElementById('qr-status');
 
             if (qrStream) return;
+            lastScannedData = ""; // 初期化
 
             container.style.display = 'flex';
             btn.classList.add('active');
             status.innerText = "カメラ起動中...";
             status.style.color = "#555";
 
-            const constraints = { 
-                video: { 
-                    facingMode: "environment",
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }, 
-                audio: false 
-            };
-
-            navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function(stream) {
                 qrStream = stream;
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true);
@@ -569,13 +348,8 @@
         function stopQRScanner() {
             const container = document.getElementById('qr-reader-container');
             const btn = document.getElementById('qr-reader-btn');
-            
-            if (qrStream) {
-                qrStream.getTracks().forEach(track => track.stop());
-                qrStream = null;
-            }
-            container.style.display = 'none';
-            btn.classList.remove('active');
+            if (qrStream) { qrStream.getTracks().forEach(track => track.stop()); qrStream = null; }
+            container.style.display = 'none'; btn.classList.remove('active');
         }
 
         function tick() {
@@ -583,43 +357,49 @@
             const video = document.getElementById('qr-video');
             const status = document.getElementById('qr-status');
 
-            // videoの準備ができ、かつサイズが0でないことを確認
             if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-                
-                // 起動成功の表示
-                if(status.innerText === "カメラ起動中...") {
-                    status.innerText = "スキャン中... (ライブラリ読込OK)";
-                }
+                if(status.innerText === "カメラ起動中...") { status.innerText = "スキャン中... (ライブラリ読込OK)"; }
 
                 const canvasElement = document.createElement("canvas");
-                canvasElement.width = video.videoWidth;
-                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth; canvasElement.height = video.videoHeight;
                 const canvas = canvasElement.getContext("2d");
                 canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
                 
                 const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
 
-                if (code && code.data) {
-                    // QRコード自体は認識できた場合
-                    status.innerText = "QR検出！ データ形式をチェック中...";
+                if (code && code.data && code.data !== lastScannedData) {
+                    lastScannedData = code.data;
+                    status.innerText = "QR検出！ データ解析中...";
                     status.style.color = "#007bff";
 
+                    // パターン1: URLかどうかチェック
+                    if (code.data.startsWith("http://") || code.data.startsWith("https://")) {
+                        stopQRScanner();
+                        if (confirm("URLを読み取りました。開きますか？\n" + code.data)) {
+                            window.open(code.data, '_blank');
+                        }
+                        return;
+                    }
+
+                    // パターン2: GeoJSONかどうかチェック
                     try {
                         const geoData = JSON.parse(code.data);
-                        // GeoJSON形式かチェック
                         if (geoData.type === "Feature" && geoData.geometry && geoData.geometry.coordinates) {
                             displayQRGeoJson(geoData);
                             stopQRScanner();
                             return; 
                         } else {
-                            status.innerText = "❌ 林小班図用のGeoJSONデータではありません";
+                            status.innerText = "❌ 未対応のJSONデータです";
                             status.style.color = "#dc3545";
                         }
                     } catch (e) {
-                        status.innerText = "❌ 座標データ(JSON)として認識できません";
+                        status.innerText = "❌ 認識できないテキストデータです";
                         status.style.color = "#dc3545";
                     }
+                    
+                    // エラーメッセージを見せるため少し待ってからスキャン再開
+                    setTimeout(() => { lastScannedData = ""; }, 2000);
                 }
             }
             requestAnimationFrame(tick);
