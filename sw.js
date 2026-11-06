@@ -1,9 +1,10 @@
-const CACHE_NAME = 'map-viewer-v4.2.0'; /* バージョンを更新 */
+const CACHE_NAME = 'map-viewer-v4.3.0'; /* バージョンを更新 */
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.png'
+  './icon.png',
+  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js' // ★QRコード解析ライブラリをキャッシュに追加
 ];
 
 // 1. インストール時に強制的に待機状態をスキップ
