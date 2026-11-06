@@ -16,8 +16,6 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
-      // 測定ID
       gtag('config', 'G-WXBP6CPKLP');
     </script>
     
@@ -129,7 +127,7 @@
         }
         #camera-btn.active { color: white; background: #28a745; }
 
-        /* ★追加：QRコード読み取りボタン */
+        /* QRコード読み取りボタン */
         #qr-reader-btn {
             position: absolute;
             bottom: 145px; 
@@ -185,7 +183,7 @@
             pointer-events: none; 
         }
 
-        /* ★追加：QRリーダー表示枠 */
+        /* QRリーダー表示枠 */
         #qr-reader-container {
             position: absolute;
             top: 50%;
@@ -229,7 +227,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.3</h1>
+        <h1>林小班図 v4.4</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -277,7 +275,7 @@
     <!-- カメラワイプ表示用ビデオ要素 -->
     <video id="camera-preview" autoplay playsinline muted></video>
 
-    <!-- ★追加：QRコード読み取り用UI -->
+    <!-- QRコード読み取り用UI -->
     <div id="qr-reader-container">
         <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">QRコード読み取り</h3>
         <video id="qr-video" playsinline></video>
@@ -293,7 +291,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
-    <!-- ★追加：jsQR（QRコード解析ライブラリ） -->
+    <!-- jsQR（QRコード解析ライブラリ） -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <script>
@@ -306,42 +304,25 @@
 
         // --- 2. Map & Base Layers Setup ---
         const gsiStd = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
-            attribution: "地理院タイル",
-            maxZoom: 18
+            attribution: "地理院タイル", maxZoom: 18
         });
-
         const gsiOrtho = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', {
-            attribution: "地理院タイル (オルソ)",
-            maxZoom: 18
+            attribution: "地理院タイル (オルソ)", maxZoom: 18
         });
-
         const slope = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png', {
-            attribution: "地理院タイル (傾斜量図)",
-            maxZoom: 18
+            attribution: "地理院タイル (傾斜量図)", maxZoom: 18
         });
-
         const rinpan = L.tileLayer('https://rinya-tiles.geospatial.jp/fr_layer_webp_2025/{z}/{x}/{y}.webp', {
-            attribution: "林野庁 森林計画対象森林レイヤ",
-            crossOrigin: "anonymous",
-            maxZoom: 16
+            attribution: "林野庁 森林計画対象森林レイヤ", crossOrigin: "anonymous", maxZoom: 16
         });
-
         const esriOrtho = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: "Tiles &copy; Esri",
-            maxZoom: 18
+            attribution: "Tiles &copy; Esri", maxZoom: 18
         });
-
         const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
-            maxZoom: 19
+            attribution: "&copy; OpenStreetMap", maxZoom: 19
         });
 
-        // マップ初期化
-        const map = L.map('map', { 
-            zoomControl: false,
-            layers: [gsiStd] 
-        }).setView([36.064, 136.220], 14);
-
+        const map = L.map('map', { zoomControl: false, layers: [gsiStd] }).setView([36.064, 136.220], 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         const baseMaps = {
@@ -355,10 +336,7 @@
         L.control.layers(baseMaps, {}, { position: 'bottomright' }).addTo(map);
 
         // --- 3. Dual Layer Logic ---
-        const layers = {
-            1: { overlay: null, opacity: 0.5 },
-            2: { overlay: null, opacity: 0.5 }
-        };
+        const layers = { 1: { overlay: null, opacity: 0.5 }, 2: { overlay: null, opacity: 0.5 } };
 
         function handleFileSelect(id) {
             const fileInput = document.getElementById('file' + id);
@@ -375,22 +353,15 @@
                     const exifObj = piexif.load(dataUrl);
                     const desc = exifObj["0th"][piexif.ImageIFD.ImageDescription];
                     if (desc) {
-                        const coordsStr = typeof desc === 'string' ? desc : desc.toString();
-                        const parts = coordsStr.split(',').map(parseFloat);
-                        if (parts.length === 4 && !parts.some(isNaN)) {
-                            coordsFromExif = parts; 
-                        }
+                        const parts = desc.toString().split(',').map(parseFloat);
+                        if (parts.length === 4 && !parts.some(isNaN)) coordsFromExif = parts; 
                     }
-                } catch(err) {
-                    console.log(`レイヤー${id}: Exifが存在しない、または読み取れませんでした。`);
-                }
+                } catch(err) {}
 
                 if (!coordsFromExif) {
                     const nameParts = file.name.replace(/\.(jpg|jpeg|png)$/i, '').split(/[_,\s\-]+/);
                     const numParts = nameParts.filter(p => !isNaN(parseFloat(p)) && p.includes('.')).map(parseFloat);
-                    if (numParts.length >= 4) {
-                        coordsFromFilename = numParts;
-                    }
+                    if (numParts.length >= 4) coordsFromFilename = numParts;
                 }
 
                 const finalCoords = coordsFromExif || coordsFromFilename;
@@ -400,10 +371,9 @@
                     document.getElementById('swLng' + id).value = finalCoords[1];
                     document.getElementById('neLat' + id).value = finalCoords[2];
                     document.getElementById('neLng' + id).value = finalCoords[3];
-                    
                     drawLayerFromDataUrl(id, dataUrl, finalCoords);
                 } else {
-                    alert("Exifデータおよびファイル名から座標を読み取れませんでした。\n手動で補正欄に入力してください。");
+                    alert("座標を読み取れませんでした。手動で補正欄に入力してください。");
                 }
             };
             reader.readAsDataURL(file);
@@ -411,61 +381,40 @@
 
         function manualRedraw(id) {
             const fileInput = document.getElementById('file' + id);
-            if (!fileInput.files[0]) {
-                alert("画像ファイルが選択されていません");
-                return;
-            }
+            if (!fileInput.files[0]) return;
             const swLat = parseFloat(document.getElementById('swLat' + id).value);
             const swLng = parseFloat(document.getElementById('swLng' + id).value);
             const neLat = parseFloat(document.getElementById('neLat' + id).value);
             const neLng = parseFloat(document.getElementById('neLng' + id).value);
-
             if (isNaN(swLat) || isNaN(neLng)) return;
-            const coords = [swLat, swLng, neLat, neLng];
-
             const reader = new FileReader();
-            reader.onload = function(e) {
-                drawLayerFromDataUrl(id, e.target.result, coords);
-            };
+            reader.onload = function(e) { drawLayerFromDataUrl(id, e.target.result, [swLat, swLng, neLat, neLng]); };
             reader.readAsDataURL(fileInput.files[0]);
         }
 
         function drawLayerFromDataUrl(id, dataUrl, coords) {
             const bounds = [[coords[0], coords[1]], [coords[2], coords[3]]];
             const opacity = parseFloat(document.getElementById('range' + id).value);
-
-            if (layers[id].overlay) {
-                map.removeLayer(layers[id].overlay);
-            }
-
-            layers[id].overlay = L.imageOverlay(dataUrl, bounds, {
-                opacity: opacity,
-                zIndex: id * 100 
-            }).addTo(map);
-
+            if (layers[id].overlay) map.removeLayer(layers[id].overlay);
+            layers[id].overlay = L.imageOverlay(dataUrl, bounds, { opacity: opacity, zIndex: id * 100 }).addTo(map);
             map.fitBounds(bounds);
         }
 
         function updateOpacity(id) {
             const val = document.getElementById('range' + id).value;
             document.getElementById('opVal' + id).innerText = val;
-            if (layers[id].overlay) {
-                layers[id].overlay.setOpacity(val);
-            }
+            if (layers[id].overlay) layers[id].overlay.setOpacity(val);
         }
 
         // --- 4. GPS Logic ---
         let gpsMarker = null;
         let gpsWatchId = null;
 
-        function focusOnLocation(lat, lng) {
-            map.setView([lat, lng], 16); 
-        }
+        function focusOnLocation(lat, lng) { map.setView([lat, lng], 16); }
 
         function toggleGPS() {
             const btn = document.getElementById('gps-btn');
             const coordDisplay = document.getElementById('coord-display');
-            
             if (gpsWatchId) {
                 navigator.geolocation.clearWatch(gpsWatchId);
                 gpsWatchId = null;
@@ -477,27 +426,15 @@
                 btn.classList.add('active');
                 coordDisplay.style.display = 'block';
                 coordDisplay.innerText = "GPS信号を検索中...";
-                
-                const gpsOptions = {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,        
-                    timeout: 10000        
-                };
-
+                const gpsOptions = { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 };
                 gpsWatchId = navigator.geolocation.watchPosition(
                     (pos) => {
                         const lat = pos.coords.latitude;
                         const lng = pos.coords.longitude;
-                        
                         coordDisplay.innerText = `緯度: ${lat.toFixed(6)} / 経度: ${lng.toFixed(6)}`;
-
                         if (!gpsMarker) {
                             gpsMarker = L.circleMarker([lat, lng], {
-                                color: 'white',
-                                weight: 4,
-                                fillColor: 'red',
-                                fillOpacity: 1,
-                                radius: 12
+                                color: 'white', weight: 4, fillColor: 'red', fillOpacity: 1, radius: 12
                             }).addTo(map);
                             focusOnLocation(lat, lng);
                         } else {
@@ -512,8 +449,7 @@
                         } else {
                             coordDisplay.innerText = "GPS信号を再取得中...";
                         }
-                    },
-                    gpsOptions 
+                    }, gpsOptions 
                 );
             }
         }
@@ -521,17 +457,12 @@
         function initLocation() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        focusOnLocation(pos.coords.latitude, pos.coords.longitude);
-                    },
-                    (err) => {
-                        console.log("起動時の位置情報取得に失敗しました", err);
-                    },
+                    (pos) => { focusOnLocation(pos.coords.latitude, pos.coords.longitude); },
+                    (err) => { console.log("起動時の位置情報取得に失敗しました"); },
                     { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
                 );
             }
         }
-        
         window.addEventListener('load', initLocation);
 
         // --- 5. ワイプカメラ機能 ---
@@ -540,18 +471,21 @@
         function toggleCamera() {
             const video = document.getElementById('camera-preview');
             const btn = document.getElementById('camera-btn');
-
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
                 currentStream = null;
                 video.style.display = 'none';
                 btn.classList.remove('active');
             } else {
+                // ★解像度をフルHD相当に指定して鮮明化
                 const constraints = {
-                    video: { facingMode: "environment" },
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     audio: false
                 };
-
                 navigator.mediaDevices.getUserMedia(constraints)
                     .then(stream => {
                         currentStream = stream;
@@ -560,25 +494,22 @@
                         btn.classList.add('active');
                     })
                     .catch(err => {
-                        alert("カメラの起動に失敗しました（権限が許可されていない可能性があります）\n" + err.message);
+                        alert("カメラ起動に失敗しました\n" + err.message);
                     });
             }
         }
 
-        // --- 6. Panel Toggle ---
         function toggleControls() {
             const content = document.getElementById('panel-content');
             const btn = document.getElementById('toggle-panel');
             if (content.style.display === 'none') {
-                content.style.display = 'block';
-                btn.innerText = '−';
+                content.style.display = 'block'; btn.innerText = '−';
             } else {
-                content.style.display = 'none';
-                btn.innerText = '＋';
+                content.style.display = 'none'; btn.innerText = '＋';
             }
         }
 
-        // --- 7. ★追加：QRコード読み取り機能 (GeoJSON連携) ---
+        // --- 7. QRコード読み取り機能 (GeoJSON連携) ---
         let qrStream = null;
         let qrGeoJsonLayer = null;
 
@@ -587,12 +518,20 @@
             const video = document.getElementById('qr-video');
             const btn = document.getElementById('qr-reader-btn');
 
-            if (qrStream) return; // 既に起動中
+            if (qrStream) return;
 
             container.style.display = 'flex';
             btn.classList.add('active');
 
-            const constraints = { video: { facingMode: "environment" }, audio: false };
+            // ★QR読み取り側も高解像度を要求
+            const constraints = { 
+                video: { 
+                    facingMode: "environment",
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }, 
+                audio: false 
+            };
 
             navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
                 qrStream = stream;
@@ -629,19 +568,19 @@
                 canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
                 
                 const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                // ★読み取り精度向上のため "attemptBoth" に変更
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
 
                 if (code && code.data) {
                     try {
                         const geoData = JSON.parse(code.data);
-                        // GeoJSON形式 (type: "Feature") であるか簡易チェック
                         if (geoData.type === "Feature" && geoData.geometry && geoData.geometry.coordinates) {
                             displayQRGeoJson(geoData);
                             stopQRScanner();
-                            return; // 読み取り成功でループ終了
+                            return; 
                         }
                     } catch (e) {
-                        // JSONパースエラー時は無視して読み取り続行
+                        // パースエラーは無視して継続
                     }
                 }
             }
@@ -649,27 +588,17 @@
         }
 
         function displayQRGeoJson(geoData) {
-            // 既存のQRレイヤがあれば削除
-            if (qrGeoJsonLayer) {
-                map.removeLayer(qrGeoJsonLayer);
-            }
+            if (qrGeoJsonLayer) { map.removeLayer(qrGeoJsonLayer); }
 
-            // マーカーアイコンの設定
             const qrIcon = L.icon({
                 iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
                 iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
                 shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
             });
 
-            // GeoJSONをマップに追加
             qrGeoJsonLayer = L.geoJSON(geoData, {
-                pointToLayer: function (feature, latlng) {
-                    return L.marker(latlng, { icon: qrIcon });
-                },
+                pointToLayer: function (feature, latlng) { return L.marker(latlng, { icon: qrIcon }); },
                 onEachFeature: function (feature, layer) {
                     if (feature.properties) {
                         let popupContent = "<b>📍 施業提案エリア</b><br>";
@@ -680,7 +609,6 @@
                 }
             }).addTo(map);
 
-            // 表示したGeoJSONの領域にズームイン
             map.fitBounds(qrGeoJsonLayer.getBounds(), { maxZoom: 16 });
             alert("QRコードの座標データを読み込みました！");
         }
