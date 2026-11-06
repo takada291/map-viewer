@@ -129,6 +129,26 @@
         }
         #camera-btn.active { color: white; background: #28a745; }
 
+        /* ★追加：QRコード読み取りボタン */
+        #qr-reader-btn {
+            position: absolute;
+            bottom: 145px; 
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #qr-reader-btn.active { color: white; background: #9b59b6; }
+
         /* 現在地座標表示 */
         #coord-display {
             position: absolute;
@@ -165,9 +185,43 @@
             pointer-events: none; 
         }
 
-        /* Leafletの標準コントロール（ズーム＆レイヤー切替）をカメラボタンの上に押し上げる */
+        /* ★追加：QRリーダー表示枠 */
+        #qr-reader-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #qr-video {
+            width: 100%;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #000;
+        }
+        .qr-close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Leafletの標準コントロールをQRリーダーボタンの上に押し上げる */
         .leaflet-bottom.leaflet-right {
-            margin-bottom: 140px !important;
+            margin-bottom: 200px !important;
         }
     </style>
 </head>
@@ -175,7 +229,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.2</h1>
+        <h1>林小班図 v4.3</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -223,14 +277,24 @@
     <!-- カメラワイプ表示用ビデオ要素 -->
     <video id="camera-preview" autoplay playsinline muted></video>
 
+    <!-- ★追加：QRコード読み取り用UI -->
+    <div id="qr-reader-container">
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">QRコード読み取り</h3>
+        <video id="qr-video" playsinline></video>
+        <button class="qr-close-btn" onclick="stopQRScanner()">閉じる</button>
+    </div>
+
     <div id="coord-display">緯度: -- / 経度: --</div>
 
+    <div id="qr-reader-btn" onclick="startQRScanner()">🔍</div>
     <div id="camera-btn" onclick="toggleCamera()">📷</div>
     <div id="gps-btn" onclick="toggleGPS()">📍</div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
+    <!-- ★追加：jsQR（QRコード解析ライブラリ） -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <script>
         // --- 1. Service Worker ---
@@ -251,7 +315,6 @@
             maxZoom: 18
         });
 
-        // ★追加：傾斜量図 レイヤー
         const slope = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png', {
             attribution: "地理院タイル (傾斜量図)",
             maxZoom: 18
@@ -279,20 +342,17 @@
             layers: [gsiStd] 
         }).setView([36.064, 136.220], 14);
 
-        // ズームコントロールを右下に
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 背景図切替コントロール（★傾斜量図を指定の場所に組み込み）
         const baseMaps = {
             "地理院地図 (標準)": gsiStd,
             "地理院地図 (オルソ)": gsiOrtho,
-            "傾斜量図 (地形把握)": slope, // ★追加
+            "傾斜量図 (地形把握)": slope, 
             "全国林班図": rinpan,
             "衛星画像 (Esri)": esriOrtho,
             "OpenStreetMap": osm
         };
         L.control.layers(baseMaps, {}, { position: 'bottomright' }).addTo(map);
-
 
         // --- 3. Dual Layer Logic ---
         const layers = {
@@ -516,6 +576,113 @@
                 content.style.display = 'none';
                 btn.innerText = '＋';
             }
+        }
+
+        // --- 7. ★追加：QRコード読み取り機能 (GeoJSON連携) ---
+        let qrStream = null;
+        let qrGeoJsonLayer = null;
+
+        function startQRScanner() {
+            const container = document.getElementById('qr-reader-container');
+            const video = document.getElementById('qr-video');
+            const btn = document.getElementById('qr-reader-btn');
+
+            if (qrStream) return; // 既に起動中
+
+            container.style.display = 'flex';
+            btn.classList.add('active');
+
+            const constraints = { video: { facingMode: "environment" }, audio: false };
+
+            navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+                qrStream = stream;
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                requestAnimationFrame(tick);
+            }).catch(function(err) {
+                alert("QRカメラの起動に失敗しました。\n" + err.message);
+                stopQRScanner();
+            });
+        }
+
+        function stopQRScanner() {
+            const container = document.getElementById('qr-reader-container');
+            const btn = document.getElementById('qr-reader-btn');
+            
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+            container.style.display = 'none';
+            btn.classList.remove('active');
+        }
+
+        function tick() {
+            if (!qrStream) return;
+            const video = document.getElementById('qr-video');
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvasElement = document.createElement("canvas");
+                canvasElement.width = video.videoWidth;
+                canvasElement.height = video.videoHeight;
+                const canvas = canvasElement.getContext("2d");
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+
+                if (code && code.data) {
+                    try {
+                        const geoData = JSON.parse(code.data);
+                        // GeoJSON形式 (type: "Feature") であるか簡易チェック
+                        if (geoData.type === "Feature" && geoData.geometry && geoData.geometry.coordinates) {
+                            displayQRGeoJson(geoData);
+                            stopQRScanner();
+                            return; // 読み取り成功でループ終了
+                        }
+                    } catch (e) {
+                        // JSONパースエラー時は無視して読み取り続行
+                    }
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function displayQRGeoJson(geoData) {
+            // 既存のQRレイヤがあれば削除
+            if (qrGeoJsonLayer) {
+                map.removeLayer(qrGeoJsonLayer);
+            }
+
+            // マーカーアイコンの設定
+            const qrIcon = L.icon({
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            // GeoJSONをマップに追加
+            qrGeoJsonLayer = L.geoJSON(geoData, {
+                pointToLayer: function (feature, latlng) {
+                    return L.marker(latlng, { icon: qrIcon });
+                },
+                onEachFeature: function (feature, layer) {
+                    if (feature.properties) {
+                        let popupContent = "<b>📍 施業提案エリア</b><br>";
+                        if (feature.properties.desc) popupContent += `${feature.properties.desc}<br>`;
+                        if (feature.properties.areaHa) popupContent += `対象面積: ${feature.properties.areaHa} ha`;
+                        layer.bindPopup(popupContent).openPopup();
+                    }
+                }
+            }).addTo(map);
+
+            // 表示したGeoJSONの領域にズームイン
+            map.fitBounds(qrGeoJsonLayer.getBounds(), { maxZoom: 16 });
+            alert("QRコードの座標データを読み込みました！");
         }
     </script>
 </body>
