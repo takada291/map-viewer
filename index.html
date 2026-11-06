@@ -206,6 +206,18 @@
             margin-bottom: 10px;
             background: #000;
         }
+        
+        /* ★追加：ステータス表示用テキスト */
+        #qr-status {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+        }
+
         .qr-close-btn {
             background: #dc3545;
             color: white;
@@ -227,7 +239,7 @@
 
     <div id="controls">
         <button id="toggle-panel" onclick="toggleControls()">−</button>
-        <h1>林小班図 v4.4</h1>
+        <h1>林小班図 v4.5</h1>
         
         <div id="panel-content">
             <div class="layer-group">
@@ -277,7 +289,9 @@
 
     <!-- QRコード読み取り用UI -->
     <div id="qr-reader-container">
-        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">QRコード読み取り</h3>
+        <h3 style="margin:0 0 5px 0; font-size:14px; color:#333;">QRコード読み取り</h3>
+        <!-- ★追加：ステータス表示 -->
+        <div id="qr-status">準備中...</div>
         <video id="qr-video" playsinline></video>
         <button class="qr-close-btn" onclick="stopQRScanner()">閉じる</button>
     </div>
@@ -477,7 +491,6 @@
                 video.style.display = 'none';
                 btn.classList.remove('active');
             } else {
-                // ★解像度をフルHD相当に指定して鮮明化
                 const constraints = {
                     video: { 
                         facingMode: "environment",
@@ -509,21 +522,29 @@
             }
         }
 
-        // --- 7. QRコード読み取り機能 (GeoJSON連携) ---
+        // --- 7. ★追加・改良：QRコード読み取り機能 (ステータス表示付き) ---
         let qrStream = null;
         let qrGeoJsonLayer = null;
 
         function startQRScanner() {
+            // ★ライブラリ読み込みチェック
+            if (typeof jsQR === 'undefined') {
+                alert("エラー：QRコード解析ライブラリ（jsQR）が読み込めていません。\n通信環境の良い場所で画面を再読み込み（リロード）してキャッシュさせてください。");
+                return;
+            }
+
             const container = document.getElementById('qr-reader-container');
             const video = document.getElementById('qr-video');
             const btn = document.getElementById('qr-reader-btn');
+            const status = document.getElementById('qr-status');
 
             if (qrStream) return;
 
             container.style.display = 'flex';
             btn.classList.add('active');
+            status.innerText = "カメラ起動中...";
+            status.style.color = "#555";
 
-            // ★QR読み取り側も高解像度を要求
             const constraints = { 
                 video: { 
                     facingMode: "environment",
@@ -560,7 +581,16 @@
         function tick() {
             if (!qrStream) return;
             const video = document.getElementById('qr-video');
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const status = document.getElementById('qr-status');
+
+            // videoの準備ができ、かつサイズが0でないことを確認
+            if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+                
+                // 起動成功の表示
+                if(status.innerText === "カメラ起動中...") {
+                    status.innerText = "スキャン中... (ライブラリ読込OK)";
+                }
+
                 const canvasElement = document.createElement("canvas");
                 canvasElement.width = video.videoWidth;
                 canvasElement.height = video.videoHeight;
@@ -568,19 +598,27 @@
                 canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
                 
                 const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                // ★読み取り精度向上のため "attemptBoth" に変更
                 const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
 
                 if (code && code.data) {
+                    // QRコード自体は認識できた場合
+                    status.innerText = "QR検出！ データ形式をチェック中...";
+                    status.style.color = "#007bff";
+
                     try {
                         const geoData = JSON.parse(code.data);
+                        // GeoJSON形式かチェック
                         if (geoData.type === "Feature" && geoData.geometry && geoData.geometry.coordinates) {
                             displayQRGeoJson(geoData);
                             stopQRScanner();
                             return; 
+                        } else {
+                            status.innerText = "❌ 林小班図用のGeoJSONデータではありません";
+                            status.style.color = "#dc3545";
                         }
                     } catch (e) {
-                        // パースエラーは無視して継続
+                        status.innerText = "❌ 座標データ(JSON)として認識できません";
+                        status.style.color = "#dc3545";
                     }
                 }
             }
